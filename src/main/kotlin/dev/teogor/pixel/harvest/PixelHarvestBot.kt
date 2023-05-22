@@ -13,7 +13,7 @@ class PixelHarvestBot(token: String) {
 
         println("Logged In!")
 
-        val databaseHandler = DatabaseHandler("bot.db")
+        val databaseHandler = DatabaseHandler("src/main/resources/pixel-harvest.db")
         databaseHandler.initializeDatabase()
 
         MessageDiscordModule(
