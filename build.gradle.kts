@@ -27,6 +27,12 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:0.31.1")
     implementation("org.xerial:sqlite-jdbc:3.36.0")
 
+    // svg converter
+    implementation("org.apache.xmlgraphics:batik-transcoder:1.14")
+    implementation("org.apache.xmlgraphics:batik-parser:1.14")
+    implementation("org.apache.httpcomponents.client5:httpclient5-fluent:5.0.4")
+    implementation("org.apache.httpcomponents:httpcore:4.4.14")
+
     // logging
     implementation("org.slf4j:slf4j-api:1.7.32")
     implementation("ch.qos.logback:logback-classic:1.2.9")

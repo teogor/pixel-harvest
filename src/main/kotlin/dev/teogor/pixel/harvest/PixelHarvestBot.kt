@@ -1,10 +1,14 @@
 package dev.teogor.pixel.harvest
 
 import dev.teogor.pixel.harvest.database.DatabaseHandler
+import dev.teogor.pixel.harvest.discord.PathUtils.getBasePathForImages
+import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.message.MessageDiscordModule
 import dev.teogor.pixel.harvest.slash.CommandDiscordModule
+import dev.teogor.pixel.harvest.svg.SvgConverter
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
+import java.io.File
 
 object DatabaseManager {
     private val databaseHandler: DatabaseHandler = DatabaseHandler("src/main/resources/pixel-harvest.db").apply {
@@ -62,6 +66,16 @@ class PixelHarvestBot(token: String) {
             bindGateway()
             setupTestCommands()
         }
+
+        val rootPath = "${getDownloadsFolderPath()}\\PixelHarvest\\ZeoAI-Automation\\images".replace("\\", "/")
+        val inputFolder = File(rootPath)
+        val outputFolder = File("${rootPath}\\converter")
+
+        SvgConverter.Builder(inputFolder, outputFolder)
+            .withSvgGenerator(true)
+            .withSvgRasterizer(true)
+            .withBatchNumber(1)
+            .build()
 
         keepBotAlive()
     }
