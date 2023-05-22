@@ -1,8 +1,5 @@
 package dev.teogor.pixel.harvest.message
 
-import com.drew.imaging.ImageMetadataReader
-import com.drew.metadata.exif.ExifIFD0Directory
-import dev.teogor.pixel.harvest.DatabaseManager
 import dev.teogor.pixel.harvest.discord.PathUtils.getBasePathForImages
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
@@ -14,10 +11,6 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.attribute.FileTime
-import java.util.Date
 
 object ImageDownloader {
     internal fun downloadImages(
@@ -82,29 +75,8 @@ object ImageDownloader {
 
                     outputStream.close()
                     inputStream.close()
-
-                    // Set the "Date Taken" metadata field
-                    val imageFile = File(filePath)
-                    setFileDateTaken(imageFile)
-
-                    DatabaseManager.addDownload(
-                        discordId = invokerId,
-                        url = imageUrl
-                    )
                 }
             }
-        }
-    }
-
-    private fun setFileDateTaken(file: File) {
-        try {
-            val metadata = ImageMetadataReader.readMetadata(file)
-            val directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory::class.java)
-            directory?.setDate(ExifIFD0Directory.TAG_DATETIME, Date())
-            directory?.setDate(ExifIFD0Directory.TAG_DATETIME_ORIGINAL, Date())
-            directory?.setDate(ExifIFD0Directory.TAG_DATETIME_DIGITIZED, Date())
-            Files.setLastModifiedTime(Paths.get(file.absolutePath), FileTime.from(Date().toInstant()))
-        } catch (_: Exception) {
         }
     }
 }
