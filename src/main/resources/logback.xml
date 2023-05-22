@@ -1,0 +1,10 @@
+<configuration>
+<!--    <logger name="org.jetbrains.exposed" level="WARN" />-->
+<!--    <logger name="com.zaxxer.hikari" level="WARN" />-->
+
+    <!-- Keep other logger configurations as needed -->
+
+    <root level="DEBUG">
+<!--        &lt;!&ndash; Specify the desired log level for the root logger &ndash;&gt;-->
+    </root>
+</configuration>
