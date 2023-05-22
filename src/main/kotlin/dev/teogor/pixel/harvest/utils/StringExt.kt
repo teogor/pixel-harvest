@@ -59,7 +59,7 @@ fun String.replaceUnavailableSymbols(): String {
 }
 
 fun String.sanitizeFileName(offset: Int = 0): String {
-    val maxLength = getMaxLengthForFileName()
+    val maxLength = 90 - offset // getMaxLengthForFileName()
 
     var sanitizedFileName = this.trim()
 
