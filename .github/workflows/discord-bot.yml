@@ -22,4 +22,5 @@ jobs:
       - name: Run Pixel Harvest Bot
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        run: java -classpath build/classes/kotlin/main -DBOT_TOKEN=$BOT_TOKEN dev.teogor.MainKt
+        run: java -classpath build/classes/kotlin/main/ -DBOT_TOKEN=$BOT_TOKEN dev.teogor.MainKt
+
