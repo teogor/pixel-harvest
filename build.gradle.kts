@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.8.21"
+    application
 }
 
 group = "dev.teogor"
@@ -9,10 +10,16 @@ repositories {
     mavenCentral()
 }
 
+application {
+    // Specify the main class for your bot
+    mainClass.set("dev.teogor.MainKt")
+}
+
 dependencies {
     implementation("com.discord4j:discord4j-core:3.2.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("com.drewnoakes:metadata-extractor:2.18.0")
+    implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 
     // database
     implementation("org.jetbrains.exposed:exposed-core:0.31.1")
