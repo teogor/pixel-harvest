@@ -16,7 +16,7 @@ class CommandDiscordModule(
     )
 
     override fun subscribeGateway(event: Event) {
-        when(event) {
+        when (event) {
             is ChatInputInteractionEvent -> SlashCommand.executeCommand(event)
         }
     }

@@ -41,7 +41,7 @@ class DatabaseHandler(private val databasePath: String) {
                 Downloads.insert {
                     it[Downloads.discordId] = existingUser.discordId
                     it[Downloads.url] = url
-                    it[Downloads.timestamp] = System.currentTimeMillis() / 1000
+                    it[timestamp] = System.currentTimeMillis() / 1000
                 }
             }
         }

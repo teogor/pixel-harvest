@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 
-fun String.createDirectoryIfNotExists() : File {
+fun String.createDirectoryIfNotExists(): File {
     val directory = Paths.get(this)
     return if (!Files.exists(directory)) {
         try {

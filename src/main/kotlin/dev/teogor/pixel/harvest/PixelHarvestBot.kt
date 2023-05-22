@@ -25,7 +25,7 @@ object DatabaseManager {
         )
     }
 
-    fun getTotalDownloadCountByDiscordUser(discordId: Long) : Long {
+    fun getTotalDownloadCountByDiscordUser(discordId: Long): Long {
         return databaseHandler.getTotalDownloadCountByDiscordUser(
             discordId = discordId,
         )
