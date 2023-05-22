@@ -146,7 +146,7 @@ class SvgConverter private constructor(
                     }
                 },
                 onError = {
-
+                    System.err.println(it.errorMessage)
                 },
             )
         }
