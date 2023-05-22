@@ -11,9 +11,7 @@ object Main {
             val bot = PixelHarvestBot(botToken)
             bot.start()
         } else {
-            println("Please provide a token using the --token argument.")
+            println("Please provide a token using the BOT_TOKEN environment variable.")
         }
-        val bot = PixelHarvestBot(botToken)
-        bot.start()
     }
 }
