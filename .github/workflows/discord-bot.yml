@@ -1,0 +1,24 @@
+name: Discord Bot CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      - name: Run Pixel Harvest Bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: java -classpath build/classes/kotlin/main -DBOT_TOKEN=$BOT_TOKEN dev.teogor.MainKt
