@@ -7,6 +7,12 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         val botToken = System.getenv("BOT_TOKEN")
+        if (botToken != null) {
+            val bot = PixelHarvestBot(botToken)
+            bot.start()
+        } else {
+            println("Please provide a token using the --token argument.")
+        }
         val bot = PixelHarvestBot(botToken)
         bot.start()
     }
