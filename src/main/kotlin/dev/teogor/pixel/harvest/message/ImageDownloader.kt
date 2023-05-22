@@ -23,58 +23,69 @@ object ImageDownloader {
         client: DiscordClient,
         event: MessageCreateEvent,
     ) {
-
         val attachments = event.message.attachments
         val message = event.message.content
         val invoker = event.message.data.mentions()[0]
         val invokerId = invoker.id().asLong()
 
-        if (attachments.isNotEmpty() && attachments.size == 1) {
-            val basePath = "${getDownloadsFolderPath()}/${
-                client.getBasePathForImages(
-                    event = event,
-                    haveChannel = false
-                )
-            }"
-            val rootDirectory = basePath.createDirectoryIfNotExists()
-            rootDirectory.mkdirs()
-
-            for (attachment in attachments) {
-                val imageUrl = attachment.url
-                val extension = File(attachment.filename).extension
-                val extractFileName = message.extractFilename
-                val index = rootDirectory.countFiles(extractFileName)
-                val fileName = if (index == 0) {
-                    extractFileName
-                } else {
-                    "$extractFileName (${index.toString().padStart(4, '0')})"
+        var matches = 0
+        event.message.components.forEach { component ->
+            component.data.components().get().forEach { element ->
+                if (!element.label().isAbsent) {
+                    val label = element.label().get()
+                    val pattern = Regex("^[UV][1-4]$")
+                    if (pattern.matches(label)) {
+                        matches++
+                    }
                 }
-                val filePath = "${basePath}${fileName}.$extension"
+            }
+        }
+        if (matches < 2) {
+            if (attachments.isNotEmpty()) {
+                val basePath = "${getDownloadsFolderPath()}/${
+                    client.getBasePathForImages(
+                        event = event,
+                        haveChannel = false
+                    )
+                }"
+                val rootDirectory = basePath.createDirectoryIfNotExists()
+                rootDirectory.mkdirs()
 
-                // Download the image
-                val url = URL(imageUrl)
-                val connection = url.openConnection()
-                connection.connect()
+                for (attachment in attachments) {
+                    val imageUrl = attachment.url
+                    val extension = File(attachment.filename).extension
+                    val extractFileName = message.extractFilename
+                    val index = rootDirectory.countFiles(extractFileName)
+                    val fileName = if (index == 0) {
+                        extractFileName
+                    } else {
+                        "$extractFileName (${index.toString().padStart(4, '0')})"
+                    }
+                    val filePath = "${basePath}${fileName}.$extension"
 
-                // Save the image to a file
-                val inputStream = BufferedInputStream(connection.getInputStream())
-                val outputStream = FileOutputStream(filePath)
+                    // Download the image
+                    val url = URL(imageUrl)
+                    val connection = url.openConnection()
+                    connection.connect()
 
-                val buffer = ByteArray(4096)
-                var bytesRead = inputStream.read(buffer)
-                while (bytesRead != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                    bytesRead = inputStream.read(buffer)
+                    // Save the image to a file
+                    val inputStream = BufferedInputStream(connection.getInputStream())
+                    val outputStream = FileOutputStream(filePath)
+
+                    val buffer = ByteArray(4096)
+                    var bytesRead = inputStream.read(buffer)
+                    while (bytesRead != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                        bytesRead = inputStream.read(buffer)
+                    }
+
+                    outputStream.close()
+                    inputStream.close()
+
+                    // Set the "Date Taken" metadata field
+                    val imageFile = File(filePath)
+                    setFileDateTaken(imageFile)
                 }
-
-                outputStream.close()
-                inputStream.close()
-
-                // Set the "Date Taken" metadata field
-                val imageFile = File(filePath)
-                setFileDateTaken(imageFile)
-
-                println("image saved to $filePath")
             }
         }
     }
