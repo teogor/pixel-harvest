@@ -1,5 +1,10 @@
 package dev.teogor.pixel.harvest.slash
 
+import dev.teogor.pixel.harvest.BotManager
+import dev.teogor.pixel.harvest.BotManager.client
+import dev.teogor.pixel.harvest.DatabaseManager.getTotalDownloadCountByDiscordUser
+import dev.teogor.pixel.harvest.discord.PathUtils
+import dev.teogor.pixel.harvest.discord.PathUtils.getBasePathForImages
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 import discord4j.core.`object`.command.ApplicationCommandOption
 import discord4j.core.spec.EmbedCreateSpec
@@ -87,21 +92,28 @@ sealed class SlashCommand {
 
         override val action: (ChatInputInteractionEvent) -> Unit
             get() = { event ->
+                val basePath = "Downloads/${
+                    client.getBasePathForImages(
+                        event = event,
+                        haveChannel = false
+                    )
+                }".replace("\\", "/")
+
                 val author = event.interaction.user
                 val username = author.username
-                val discriminator = author.discriminator
-                val usernameDiscord = "$username#$discriminator"
+
+                val downloadCount = getTotalDownloadCountByDiscordUser(author.id.asLong())
+
                 val builder = EmbedCreateSpec.builder()
                 builder.color(Color.BLACK)
-                builder.title("Your Info - $usernameDiscord")
+                builder.title("Your Info - $username")
                 builder.description(
                     """
-                    **Files Downloaded:** 32742
-                    **Images Downloaded:** 23948
+                    **Lifetime Images Downloaded:** `$downloadCount`
             
                     **Auto Download:**  `Active`
-                    **Download Folder Root:**  `Downloads`
                     **Channel Subdirectory:**  `Disabled`
+                    **Download Folder Root:**  `${basePath}`
                     """.trimIndent()
                 )
                 val spec = InteractionApplicationCommandCallbackSpec.builder()

@@ -8,7 +8,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 class DatabaseHandler(private val databasePath: String) {
     fun initializeDatabase() {
-        println("DatabaseHandler::initializeDatabase")
         // Connect to the SQLite database
         Database.connect("jdbc:sqlite:$databasePath", driver = "org.sqlite.JDBC")
 
@@ -48,7 +47,14 @@ class DatabaseHandler(private val databasePath: String) {
         }
     }
 
-    fun getUser(discordId: Long): User? {
+    fun getTotalDownloadCountByDiscordUser(discordId: Long): Long {
+        return transaction {
+            Downloads.select { Downloads.discordId eq discordId }
+                .count()
+        }
+    }
+
+    private fun getUser(discordId: Long): User? {
         return transaction {
             val userRow = Users.select { Users.discordId eq discordId }.singleOrNull()
             userRow?.let {

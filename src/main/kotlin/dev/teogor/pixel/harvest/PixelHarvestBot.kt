@@ -4,6 +4,7 @@ import dev.teogor.pixel.harvest.database.DatabaseHandler
 import dev.teogor.pixel.harvest.message.MessageDiscordModule
 import dev.teogor.pixel.harvest.slash.CommandDiscordModule
 import discord4j.core.DiscordClient
+import discord4j.core.GatewayDiscordClient
 
 object DatabaseManager {
     private val databaseHandler: DatabaseHandler = DatabaseHandler("src/main/resources/pixel-harvest.db").apply {
@@ -23,6 +24,17 @@ object DatabaseManager {
             url = url
         )
     }
+
+    fun getTotalDownloadCountByDiscordUser(discordId: Long) : Long {
+        return databaseHandler.getTotalDownloadCountByDiscordUser(
+            discordId = discordId,
+        )
+    }
+}
+
+object BotManager {
+    lateinit var client: DiscordClient
+    lateinit var gateway: GatewayDiscordClient
 }
 
 class PixelHarvestBot(token: String) {
@@ -32,6 +44,9 @@ class PixelHarvestBot(token: String) {
         val gateway = client.login().block() ?: return
 
         println("Logged In!")
+
+        BotManager.client = client
+        BotManager.gateway = gateway
 
         MessageDiscordModule(
             client = client,
