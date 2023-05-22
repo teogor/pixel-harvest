@@ -2,10 +2,11 @@ package dev.teogor.pixel.harvest.database
 
 import org.jetbrains.exposed.sql.Table
 
-object Users : Table() {
+object Downloads : Table() {
     val id = integer("id").autoIncrement()
-    val discordId = long("discordId").uniqueIndex()
-    val username = varchar("username", 100)
+    val discordId = reference("discordId", Users.discordId)
+    val url = varchar("url", 2000)
+    val timestamp = long("timestamp")
 
     override val primaryKey = PrimaryKey(id)
 }

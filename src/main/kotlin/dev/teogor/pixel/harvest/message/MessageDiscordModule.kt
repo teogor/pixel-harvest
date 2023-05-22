@@ -1,5 +1,6 @@
 package dev.teogor.pixel.harvest.message
 
+import dev.teogor.pixel.harvest.DatabaseManager
 import dev.teogor.pixel.harvest.DiscordModule
 import dev.teogor.pixel.harvest.discord.deleteMessageAfterDelay
 import dev.teogor.pixel.harvest.models.Bot
@@ -9,9 +10,6 @@ import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.Event
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.event.domain.message.ReactionAddEvent
-import discord4j.core.spec.EmbedCreateSpec
-import discord4j.core.spec.MessageCreateSpec
-import discord4j.rest.util.Color
 import java.time.Duration
 
 
@@ -35,6 +33,11 @@ class MessageDiscordModule(
     private fun onMessageReceived(event: MessageCreateEvent) {
         val message = event.message
         val authorId = message.author.orElse(null)?.id?.asLong() ?: return
+        val author = message.author
+        DatabaseManager.addUser(
+            discordId = authorId,
+            username = author.get().username,
+        )
         if (Bot.MidJourneyBot.isBotIdMatch(authorId)) {
             ImageDownloader.downloadImages(
                 client = client,
@@ -43,32 +46,7 @@ class MessageDiscordModule(
         }
         if (Developer.TeogorDeveloper.isDeveloperIdMatch(authorId)) {
             message.deleteMessageAfterDelay(Duration.ofSeconds(10))
-            sendEmbeddedMessage(event)
         }
-
-    }
-
-    private fun sendEmbeddedMessage(event: MessageCreateEvent) {
-        val channel = event.message.channel.block() ?: return
-        val author = event.message.author.get()
-        val username = author.username
-        val discriminator = author.discriminator
-        val usernameDiscord = "$username#$discriminator"
-        val builder = EmbedCreateSpec.builder()
-        builder.color(Color.BLACK)
-        builder.title("Your Info - $usernameDiscord")
-        builder.description(
-            """
-            **Files Downloaded:** 32742
-            **Images Downloaded:** 23948
-        
-            **Auto Download:**  `Active`
-            **Download Folder Root:**  `Downloads`
-            **Channel Subdirectory:**  `Disabled`
-            """.trimIndent()
-        )
-
-        channel.createMessage(builder.build())?.block()
     }
 
     private fun deleteMessage(event: ReactionAddEvent) {

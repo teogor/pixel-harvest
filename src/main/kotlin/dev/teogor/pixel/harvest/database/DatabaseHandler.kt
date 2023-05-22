@@ -2,32 +2,60 @@ package dev.teogor.pixel.harvest.database
 
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class DatabaseHandler(private val databasePath: String) {
     fun initializeDatabase() {
-        Database.connect("jdbc:sqlite:$databasePath", "org.sqlite.JDBC")
+        println("DatabaseHandler::initializeDatabase")
+        // Connect to the SQLite database
+        Database.connect("jdbc:sqlite:$databasePath", driver = "org.sqlite.JDBC")
+
+        // Drop existing tables
+        // transaction {
+        //     SchemaUtils.drop(Users, Downloads)
+        // }
+
+        // Create the necessary tables
         transaction {
-            SchemaUtils.create(Users)
+            SchemaUtils.create(Users, Downloads)
         }
     }
 
-    // fun addUser(userId: Long, username: String, level: Int): Int {
-    //     return transaction {
-    //         Users.insertAndGetId {
-    //             it[Users.userId] = userId
-    //             it[Users.username] = username
-    //             it[Users.level] = level
-    //         }.value
-    //     }
-    // }
+    fun addUser(discordId: Long, username: String) {
+        transaction {
+            val existingUser = getUser(discordId)
+            if (existingUser == null) {
+                Users.insert {
+                    it[Users.discordId] = discordId
+                    it[Users.username] = username
+                }
+            }
+        }
+    }
 
-    fun getUsers(): List<User> {
+    fun addDownload(discordId: Long, url: String) {
+        transaction {
+            val existingUser = getUser(discordId)
+            if (existingUser != null) {
+                Downloads.insert {
+                    it[Downloads.discordId] = existingUser.discordId
+                    it[Downloads.url] = url
+                    it[Downloads.timestamp] = System.currentTimeMillis() / 1000
+                }
+            }
+        }
+    }
+
+    fun getUser(discordId: Long): User? {
         return transaction {
-            Users.selectAll().map {
+            val userRow = Users.select { Users.discordId eq discordId }.singleOrNull()
+            userRow?.let {
                 User(
-                    it[Users.id], it[Users.userId], it[Users.username], it[Users.level]
+                    id = it[Users.id],
+                    discordId = it[Users.discordId],
+                    username = it[Users.username]
                 )
             }
         }
@@ -35,8 +63,9 @@ class DatabaseHandler(private val databasePath: String) {
 
     data class User(
         val id: Int,
-        val userId: Long,
+        val discordId: Long,
         val username: String,
-        val level: Int
     )
+
+
 }
