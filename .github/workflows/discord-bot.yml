@@ -19,8 +19,8 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
-      - name: Run Pixel Harvest Bot
-        env:
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        run: java -classpath build/classes/kotlin/main/ -DBOT_TOKEN=$BOT_TOKEN dev.teogor.MainKt
+#      - name: Run Pixel Harvest Bot
+#        env:
+#          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+#        run: java -classpath build/classes/kotlin/main/ -DBOT_TOKEN=$BOT_TOKEN dev.teogor.MainKt
 
