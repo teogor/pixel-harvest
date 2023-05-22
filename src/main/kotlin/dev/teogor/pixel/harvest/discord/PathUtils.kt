@@ -24,9 +24,6 @@ object PathUtils {
         } else {
             "PixelHarvest/$serverName/images/"
         }
-
-        val folder = File(basePath)
-        folder.mkdirs()
         return basePath
     }
 

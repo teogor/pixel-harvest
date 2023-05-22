@@ -23,12 +23,13 @@ object ImageDownloader {
         client: DiscordClient,
         event: MessageCreateEvent,
     ) {
+
         val attachments = event.message.attachments
         val message = event.message.content
         val invoker = event.message.data.mentions()[0]
         val invokerId = invoker.id().asLong()
 
-        if (attachments.isNotEmpty()) {
+        if (attachments.isNotEmpty() && attachments.size == 1) {
             val basePath = "${getDownloadsFolderPath()}/${
                 client.getBasePathForImages(
                     event = event,
@@ -36,6 +37,7 @@ object ImageDownloader {
                 )
             }"
             val rootDirectory = basePath.createDirectoryIfNotExists()
+            rootDirectory.mkdirs()
 
             for (attachment in attachments) {
                 val imageUrl = attachment.url
@@ -71,6 +73,8 @@ object ImageDownloader {
                 // Set the "Date Taken" metadata field
                 val imageFile = File(filePath)
                 setFileDateTaken(imageFile)
+
+                println("image saved to $filePath")
             }
         }
     }

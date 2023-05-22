@@ -11,6 +11,8 @@ class PixelHarvestBot(token: String) {
     fun start() {
         val gateway = client.login().block() ?: return
 
+        println("Logged In!")
+
         val databaseHandler = DatabaseHandler("bot.db")
         databaseHandler.initializeDatabase()
 
