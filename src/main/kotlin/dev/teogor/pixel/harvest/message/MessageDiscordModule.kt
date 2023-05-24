@@ -7,12 +7,12 @@ import dev.kord.core.event.Event
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.event.message.ReactionAddEvent
 import dev.teogor.pixel.harvest.DiscordModule
-import kotlinx.coroutines.runBlocking
 import dev.teogor.pixel.harvest.database.DatabaseManager.addUser
 import dev.teogor.pixel.harvest.models.Bot
 import dev.teogor.pixel.harvest.models.Developer
 import dev.teogor.pixel.harvest.utils.Emoji
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import java.time.Duration
 
 class MessageDiscordModule : DiscordModule() {
@@ -51,7 +51,8 @@ class MessageDiscordModule : DiscordModule() {
     }
 
     private fun reactionHandler(event: ReactionAddEvent) {
-        if (Bot.isKnownBot(event.userId.value.toLong()).first) {
+        event.toSafeId()
+        if (Bot.isKnownBot(event.toSafeId()).first) {
             return
         }
         var user: User
@@ -86,4 +87,11 @@ fun Message.deleteMessageAfterDelay(delay: Duration) {
         delay(delay.toMillis())
         delete(reason = "autodelete for developer")
     }
+}
+
+fun <T : Event> T.toSafeId(): Long {
+    if (this is ReactionAddEvent) {
+        this.userId.value.toLong()
+    }
+    return 0
 }
