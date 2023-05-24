@@ -1,5 +1,6 @@
 package dev.teogor.pixel.harvest.message
 
+import dev.teogor.pixel.harvest.DatabaseManager
 import dev.teogor.pixel.harvest.discord.PathUtils.getBasePathForImages
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
@@ -56,6 +57,10 @@ object ImageDownloader {
                         "$extractFileName (${index.toString().padStart(4, '0')})"
                     }
                     val filePath = "${basePath}${fileName}.$extension"
+                    DatabaseManager.addDownload(
+                        discordId = invokerId,
+                        url = imageUrl,
+                    )
 
                     // Download the image
                     val url = URL(imageUrl)
