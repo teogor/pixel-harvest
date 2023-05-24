@@ -10,9 +10,6 @@ import org.apache.hc.client5.http.fluent.Request
 import org.apache.hc.core5.http.ClassicHttpResponse
 import java.io.File
 import java.io.FileWriter
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * A utility class for converting images to SVG format using the vectorizer.ai API.
@@ -83,7 +80,7 @@ class SvgGenerator {
                 // Delete the old file
                 if (imageFile.exists()) {
                     // todo once the **model** is fine remove this
-                     imageFile.delete()
+                    imageFile.delete()
                 }
             }
         }
