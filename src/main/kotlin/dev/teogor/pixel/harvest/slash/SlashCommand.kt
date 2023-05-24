@@ -260,7 +260,7 @@ sealed class SlashCommand {
     object PingCommand : SlashCommand() {
         override val name: String = "ping"
 
-        override val description: String = "Ping! \uD83C\uDFD3"
+        override val description: String = "Pong! \uD83C\uDFD3"
 
         override suspend fun action(
             interaction: GuildChatInputCommandInteraction,
