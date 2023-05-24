@@ -119,6 +119,8 @@ object ImageDownloader {
                     message.addReaction(Emoji.FileDownloaded)
                 }
             }
+        } else {
+            // todo mention @author in a new thread so he does not forget about it
         }
     }
 }
