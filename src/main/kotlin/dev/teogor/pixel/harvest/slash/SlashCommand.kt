@@ -298,7 +298,6 @@ sealed class SlashCommand {
                     haveChannel = false
                 )
             }"
-            println(rootPath)
 
             val author = interaction.user
             val username = author.username
