@@ -134,6 +134,25 @@ sealed class SlashCommand {
             val outputFolder = File("${rootPath}\\processed")
             val imagesToProcess = inputFolder.countFiles("")
 
+            if (imagesToProcess == 0) {
+                message = kord.rest.interaction.modifyFollowupMessage(
+                    applicationId = interaction.applicationId,
+                    interactionToken = response.token,
+                    messageId = message.id,
+                ) {
+                    content = ""
+                    embeds = mutableListOf(
+                        EmbedBuilder().apply {
+                            description = """
+                                There are no images to be processed.
+                            """.trimIndent()
+                            color = Colors.RED
+                        }
+                    )
+                }
+                return
+            }
+
             val progressData = ProgressData(
                 currentIndex = 0,
                 processingStep = ProcessingStep.PARSING,
