@@ -46,7 +46,7 @@ class MessageDiscordModule : DiscordModule() {
                 message = event.message
             )
         } else if (Developer.TeogorDeveloper.isDeveloperIdMatch(authorId)) {
-            message.deleteMessageAfterDelay(Duration.ofSeconds(10))
+            // message.deleteMessageAfterDelay(Duration.ofSeconds(10))
         }
     }
 
