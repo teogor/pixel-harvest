@@ -64,21 +64,6 @@ sealed class SlashCommand {
             }
     }
 
-    object SettingsSlashCommand : SlashCommand() {
-        override val name: String = "settings"
-
-        override val commandRequest: ApplicationCommandRequest
-            get() = ApplicationCommandRequest.builder()
-                .name(name)
-                .description("View and adjust your personal settings.")
-                .build()
-
-        override val action: (ChatInputInteractionEvent) -> Unit
-            get() = { event ->
-                event.reply("Adjust your settings here.").withEphemeral(true).subscribe()
-            }
-    }
-
     object InfoSlashCommand : SlashCommand() {
         override val name: String = "info"
 
@@ -119,6 +104,21 @@ sealed class SlashCommand {
                     .ephemeral(true)
                     .build()
                 event.reply(spec).block()
+            }
+    }
+
+    object SettingsSlashCommand : SlashCommand() {
+        override val name: String = "settings"
+
+        override val commandRequest: ApplicationCommandRequest
+            get() = ApplicationCommandRequest.builder()
+                .name(name)
+                .description("View and adjust your personal settings.")
+                .build()
+
+        override val action: (ChatInputInteractionEvent) -> Unit
+            get() = { event ->
+                event.reply("Adjust your settings here.").withEphemeral(true).subscribe()
             }
     }
 
