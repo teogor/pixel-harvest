@@ -51,7 +51,6 @@ class MessageDiscordModule : DiscordModule() {
     }
 
     private fun reactionHandler(event: ReactionAddEvent) {
-        event.toSafeId()
         if (Bot.isKnownBot(event.toSafeId()).first) {
             return
         }
