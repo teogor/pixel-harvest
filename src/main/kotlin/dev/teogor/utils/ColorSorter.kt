@@ -3,7 +3,7 @@ package dev.teogor.utils
 import dev.kord.common.Color
 import java.io.File
 
-private val path = "src/main/kotlin/dev/teogor/pixel/harvest/utils/Colors.kt"
+private const val path = "src/main/kotlin/dev/teogor/pixel/harvest/utils/Colors.kt"
 
 fun main() {
     val inputFile = File(path) // Replace with the actual path to your input file
