@@ -241,16 +241,20 @@ sealed class SlashCommand {
 
         override val description: String = "View and adjust your personal settings."
 
-        // override val commandRequest: ApplicationCommandRequest
-        //     get() = ApplicationCommandRequest.builder()
-        //         .name(name)
-        //         .description("View and adjust your personal settings.")
-        //         .build()
-        //
-        // override val action: (ChatInputInteractionEvent) -> Unit
-        //     get() = { event ->
-        //         event.reply("Adjust your settings here.").withEphemeral(true).subscribe()
-        //     }
+        override suspend fun action(
+            interaction: GuildChatInputCommandInteraction,
+            response: DeferredEphemeralMessageInteractionResponseBehavior
+        ) {
+            super.action(interaction, response)
+
+            val message = kord.rest.interaction.createFollowupMessage(
+                applicationId = interaction.applicationId,
+                interactionToken = response.token,
+                ephemeral = true
+            ) {
+                content = "Adjust your settings here."
+            }
+        }
     }
 
     companion object {
