@@ -234,10 +234,8 @@ class SvgConverter private constructor(
                     )
                 }
 
-                // Delete the old file
                 if (imageFile.exists()) {
-                    // todo once the **model** is fine remove this
-                    // imageFile.delete()
+                    imageFile.delete()
                 }
                 dispatchProgress(
                     progressData = progressData,
