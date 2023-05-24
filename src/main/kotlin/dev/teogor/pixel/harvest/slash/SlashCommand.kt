@@ -141,15 +141,6 @@ sealed class SlashCommand {
                 .build()
 
         }
-
-        // override val action: (ChatInputInteractionEvent) -> Unit
-        //     get() = { event ->
-        //
-        //         event.reply("Converting to svg in progress...")
-        //             .withEphemeral(true)
-        //             .subscribe()
-        //
-        //     }
     }
 
     object GreetSlashCommand : SlashCommand() {
@@ -167,25 +158,23 @@ sealed class SlashCommand {
             }
         }
 
-        // override val commandRequest: ApplicationCommandRequest
-        //     get() = ApplicationCommandRequest.builder()
-        //         .name(name)
-        //         .description("Greets you")
-        //         .addOption(
-        //             ApplicationCommandOptionData.builder()
-        //                 .name("name")
-        //                 .description("Your name")
-        //                 .type(ApplicationCommandOption.Type.STRING.value)
-        //                 .required(true)
-        //                 .build()
-        //         ).build()
-        //
-        // override val action: (ChatInputInteractionEvent) -> Unit
-        //     get() = { event ->
-        //         val name = event.getStringParam("name")
-        //
-        //         event.reply("Greetings, $name!").withEphemeral(true).subscribe()
-        //     }
+        override suspend fun action(
+            interaction: GuildChatInputCommandInteraction,
+            response: DeferredEphemeralMessageInteractionResponseBehavior
+        ) {
+            super.action(interaction, response)
+
+            val command = interaction.command
+            val name = command.options["name"]?.value?.asStringOrDefault()
+
+            val message = kord.rest.interaction.createFollowupMessage(
+                applicationId = interaction.applicationId,
+                interactionToken = response.token,
+                ephemeral = true
+            ) {
+                content = "Greetings, $name!"
+            }
+        }
     }
 
     object InfoSlashCommand : SlashCommand() {
