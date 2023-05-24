@@ -177,7 +177,8 @@ sealed class SlashCommand {
                         ProcessingStep.SCALING_SVG -> imagesToProcess + progressData.currentIndex
                         ProcessingStep.DONE -> imagesToProcess * 2
                     }
-                    val percentage = (currentIndex.toDouble() / (imagesToProcess * 2).toDouble()) * 100
+                    val progress = (currentIndex.toDouble() / (imagesToProcess * 2).toDouble()) * 100
+                    val formattedProgress = String.format("%.2f", progress)
                     val remainingIterations = imagesToProcess * 2 - currentIndex
                     val estimatedRemainingTime = averageTime * remainingIterations
 
@@ -204,7 +205,7 @@ sealed class SlashCommand {
                         ProcessingStep.DONE -> "DONE"
                     }
 
-                    val processingTitle = "Image Processing Progress: $percentage%"
+                    val processingTitle = "Image Processing Progress: $formattedProgress%"
                     val imagesToProcessLabel = "Total Images to Process:"
                     val currentStepLabel = "Current Step"
                     val downloadLocationLabel = "Download Location (Output Folder)"
