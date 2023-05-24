@@ -5,18 +5,13 @@ import dev.teogor.pixel.harvest.DiscordModule
 import dev.teogor.pixel.harvest.discord.deleteMessageAfterDelay
 import dev.teogor.pixel.harvest.models.Bot
 import dev.teogor.pixel.harvest.models.Developer
-import discord4j.core.DiscordClient
-import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.Event
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.event.domain.message.ReactionAddEvent
 import java.time.Duration
 
 
-class MessageDiscordModule(
-    client: DiscordClient,
-    gateway: GatewayDiscordClient,
-) : DiscordModule(client, gateway) {
+class MessageDiscordModule : DiscordModule() {
 
     override val events = listOf(
         MessageCreateEvent::class.java,

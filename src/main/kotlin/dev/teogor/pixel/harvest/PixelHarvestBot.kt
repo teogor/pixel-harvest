@@ -5,14 +5,7 @@ import dev.teogor.pixel.harvest.message.MessageDiscordModule
 import dev.teogor.pixel.harvest.slash.CommandDiscordModule
 import dev.teogor.pixel.harvest.svg.SvgConverter
 import discord4j.core.DiscordClient
-import discord4j.core.GatewayDiscordClient
 import java.io.File
-
-
-object BotManager {
-    lateinit var client: DiscordClient
-    lateinit var gateway: GatewayDiscordClient
-}
 
 class PixelHarvestBot(token: String) {
     private val client: DiscordClient = DiscordClient.create(token)
@@ -25,17 +18,11 @@ class PixelHarvestBot(token: String) {
         BotManager.client = client
         BotManager.gateway = gateway
 
-        MessageDiscordModule(
-            client = client,
-            gateway = gateway,
-        ).apply {
+        MessageDiscordModule().apply {
             bindGateway()
         }
 
-        CommandDiscordModule(
-            client = client,
-            gateway = gateway,
-        ).apply {
+        CommandDiscordModule().apply {
             bindGateway()
             setupTestCommands()
         }

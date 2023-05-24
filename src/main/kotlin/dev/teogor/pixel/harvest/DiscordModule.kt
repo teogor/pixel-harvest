@@ -5,11 +5,11 @@ import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.Event
 import kotlinx.coroutines.runBlocking
 
-abstract class DiscordModule(
-    val client: DiscordClient,
-    val gateway: GatewayDiscordClient,
-) {
+abstract class DiscordModule {
     abstract val events: List<Class<out Event>>
+
+    val client: DiscordClient = BotManager.client
+    val gateway: GatewayDiscordClient = BotManager.gateway
 
     fun bindGateway() {
         events.forEach {

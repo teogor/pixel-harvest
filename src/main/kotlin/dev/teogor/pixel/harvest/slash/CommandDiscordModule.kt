@@ -1,15 +1,10 @@
 package dev.teogor.pixel.harvest.slash
 
 import dev.teogor.pixel.harvest.DiscordModule
-import discord4j.core.DiscordClient
-import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.Event
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 
-class CommandDiscordModule(
-    client: DiscordClient,
-    gateway: GatewayDiscordClient,
-) : DiscordModule(client, gateway) {
+class CommandDiscordModule : DiscordModule() {
 
     override val events = listOf(
         ChatInputInteractionEvent::class.java
