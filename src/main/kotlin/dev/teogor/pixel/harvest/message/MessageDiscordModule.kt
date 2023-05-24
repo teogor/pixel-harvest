@@ -67,6 +67,7 @@ class MessageDiscordModule : DiscordModule() {
         }
         if (user.isBot) {
             println(user)
+            return
         }
 
         val emoji = event.emoji

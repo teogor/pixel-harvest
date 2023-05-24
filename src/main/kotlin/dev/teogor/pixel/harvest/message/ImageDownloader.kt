@@ -25,7 +25,6 @@ object ImageDownloader {
     private var isDownloading: Boolean = false
 
     fun addToQueue(message: Message) {
-        println("addToQueue")
         message.addReaction(Emoji.FileDownloadQueue)
         if (!downloadQueue.contains(message)) {
             downloadQueue.add(message)
@@ -50,7 +49,6 @@ object ImageDownloader {
     private fun downloadImages(
         message: Message,
     ) {
-        println("downloadImages")
         message.removeAllReaction(Emoji.FileDownloadQueue)
         val attachments = message.attachments
         val content = message.content
@@ -130,9 +128,12 @@ object ImageDownloader {
                 channel?.let {
                     val messageLink =
                         "https://discord.com/channels/${channel.guildId.value}/${message.channelId.value}/${message.id.value}"
-                    val user = BotManager.kord.getUser(Snowflake((message.author?.id?.value?.toLong() ?: 0L)))
-                    user?.let {
-                        channel.createMessage("Generated prompt via imagine at $messageLink\nprompt: ${message.content}\nauthor ${user.mention}")
+                    message.mentionedUsers.collect {
+                        val user = BotManager.kord.getUser(Snowflake(it.id.value))
+                        user?.let {
+                            val extractFileName = content.extractFilename
+                            channel.createMessage("Generated prompt via imagine at $messageLink\nprompt: ${extractFileName}\nauthor ${user.mention}")
+                        }
                     }
                 }
             }
