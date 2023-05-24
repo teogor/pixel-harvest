@@ -74,7 +74,10 @@ sealed class Bot {
          * ```
          */
         fun isKnownBot(userId: Long): Pair<Boolean, Bot?> {
-            println(userId)
+            println("isKnownBot=$userId")
+            if (userId == 0L) {
+                return Pair(false, null)
+            }
             val bot = botIds.find { it.id == userId }
             return Pair(bot != null, bot)
         }
