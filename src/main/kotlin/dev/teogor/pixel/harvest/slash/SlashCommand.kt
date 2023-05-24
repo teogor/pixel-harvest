@@ -9,6 +9,7 @@ import dev.kord.rest.builder.interaction.boolean
 import dev.kord.rest.builder.interaction.string
 import dev.kord.rest.builder.message.EmbedBuilder
 import dev.teogor.pixel.harvest.BotManager.kord
+import dev.teogor.pixel.harvest.beta.ColorPairGenerator
 import dev.teogor.pixel.harvest.database.DatabaseManager.getTotalDownloadCountByDiscordUser
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.message.getBasePathForImages
@@ -20,6 +21,7 @@ import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countDirectories
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
 import dev.teogor.pixel.harvest.utils.Colors
 import dev.teogor.pixel.harvest.utils.asBooleanOrDefault
+import dev.teogor.pixel.harvest.utils.asStringDefault
 import dev.teogor.pixel.harvest.utils.asStringOrDefault
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -61,6 +63,62 @@ sealed class SlashCommand {
 
     open fun withOptions(chatInputCreateBuilder: ChatInputCreateBuilder) {
 
+    }
+
+    object ColorPromptSlashCommand : SlashCommand() {
+        override val name: String = "color-pair"
+
+        override val description: String = "Generates a random pair of colors."
+
+        override fun withOptions(chatInputCreateBuilder: ChatInputCreateBuilder) {
+            chatInputCreateBuilder.apply {
+                string(
+                    name = "format",
+                    description = "Format of color pair. Example: `\$color1 to \$color2`, `\$c1, \$c2`"
+                ) {
+                    required = true
+                }
+                string(
+                    name = "prompt",
+                    description = "The pair to be applied to. Example: `background gradient \$colors`"
+                ) {
+                    required = false
+                }
+            }
+        }
+
+        override suspend fun action(
+            interaction: GuildChatInputCommandInteraction,
+            response: DeferredEphemeralMessageInteractionResponseBehavior
+        ) {
+            val command = interaction.command
+            val formatOption = command.options["format"].asStringDefault("\$c1 \$c2")
+            val promptOption = command.options["prompt"].asStringDefault("\$colors")
+
+            val pairCount = 10
+            val imaginePrompt = "/imagine prompt:"
+            val colorPairGenerator = ColorPairGenerator()
+            val pairs = colorPairGenerator.generateRandomColorPairs(
+                pairCount = pairCount,
+                format = formatOption,
+                allowReversed = false,
+                includeAdditionalColors = false,
+            )
+            val midjourneySyntax = pairs.joinToString(separator = ",", prefix = "{", postfix = "}")
+            val endPrompt = "$imaginePrompt${promptOption.replace("\$colors", midjourneySyntax)}"
+
+            val message = kord.rest.interaction.createFollowupMessage(
+                applicationId = interaction.applicationId,
+                interactionToken = response.token,
+                ephemeral = true
+            ) {
+                content = """
+                    ```txt
+                    $endPrompt
+                    ```
+                    """.trimIndent()
+            }
+        }
     }
 
     object GenerateSlashCommand : SlashCommand() {
@@ -387,6 +445,7 @@ sealed class SlashCommand {
 
     companion object {
         private val commands: List<SlashCommand> = listOf(
+            ColorPromptSlashCommand,
             GenerateSlashCommand,
             GreetSlashCommand,
             InfoSlashCommand,
