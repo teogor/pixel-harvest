@@ -7,6 +7,6 @@ appender("CONSOLE", ConsoleAppender) {
     }
 }
 
-root(INFO) {
+root(TRACE) {
     appenderRef("CONSOLE")
 }
