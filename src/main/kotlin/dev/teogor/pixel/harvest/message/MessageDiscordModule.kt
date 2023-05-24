@@ -38,7 +38,6 @@ class MessageDiscordModule : DiscordModule() {
 
     private fun onMessageReceived(event: MessageCreateEvent) {
         val message = event.message
-        println(message)
         val authorId = message.author?.id?.value?.toLong() ?: return
         val author = message.author!!
         addUser(
@@ -69,7 +68,6 @@ class MessageDiscordModule : DiscordModule() {
         if (user.isBot) {
             println(user)
         }
-        println(user)
 
         val emoji = event.emoji
 

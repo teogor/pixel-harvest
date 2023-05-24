@@ -3,7 +3,6 @@ package dev.teogor.pixel.harvest.message
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.entity.Message
-import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.channel.Channel
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
@@ -26,8 +25,11 @@ object ImageDownloader {
     private var isDownloading: Boolean = false
 
     fun addToQueue(message: Message) {
+        println("addToQueue")
         message.addReaction(Emoji.FileDownloadQueue)
-        downloadQueue.add(message)
+        if (!downloadQueue.contains(message)) {
+            downloadQueue.add(message)
+        }
 
         if (!isDownloading) {
             startDownloading()
@@ -48,6 +50,7 @@ object ImageDownloader {
     private fun downloadImages(
         message: Message,
     ) {
+        println("downloadImages")
         message.removeAllReaction(Emoji.FileDownloadQueue)
         val attachments = message.attachments
         val content = message.content
@@ -125,7 +128,8 @@ object ImageDownloader {
             runBlocking {
                 val channel = BotManager.kord.getChannelOf<TextChannel>(MessageDiscordModule.ImagineChannel.id)
                 channel?.let {
-                    val messageLink = "https://discord.com/channels/${channel.guildId.value}/${message.channelId.value}/${message.id.value}"
+                    val messageLink =
+                        "https://discord.com/channels/${channel.guildId.value}/${message.channelId.value}/${message.id.value}"
                     val user = BotManager.kord.getUser(Snowflake((message.author?.id?.value?.toLong() ?: 0L)))
                     user?.let {
                         channel.createMessage("Generated prompt via imagine at $messageLink\nprompt: ${message.content}\nauthor ${user.mention}")
