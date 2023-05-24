@@ -15,6 +15,16 @@ sealed class Bot {
     abstract val name: String
 
     /**
+     * Checks if the bot's ID is the same as the provided user ID.
+     *
+     * @param authorId The ID of the user to compare with the bot's ID.
+     * @return `true` if the user ID is the same as the bot's ID, `false` otherwise.
+     */
+    fun isBotIdMatch(authorId: Long): Boolean {
+        return id == authorId
+    }
+
+    /**
      * Represents the Pixel Harvest bot.
      */
     object PixelHarvestBot : Bot() {
@@ -64,6 +74,7 @@ sealed class Bot {
          * ```
          */
         fun isKnownBot(userId: Long): Pair<Boolean, Bot?> {
+            println(userId)
             val bot = botIds.find { it.id == userId }
             return Pair(bot != null, bot)
         }
@@ -77,15 +88,5 @@ sealed class Bot {
         fun getBotById(botId: Long): Bot? {
             return botIds.find { it.id == botId }
         }
-    }
-
-    /**
-     * Checks if the bot's ID is the same as the provided user ID.
-     *
-     * @param authorId The ID of the user to compare with the bot's ID.
-     * @return `true` if the user ID is the same as the bot's ID, `false` otherwise.
-     */
-    fun isBotIdMatch(authorId: Long): Boolean {
-        return id == authorId
     }
 }
