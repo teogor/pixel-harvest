@@ -40,4 +40,12 @@ object ContentTrimmerTest : Test() {
         }?.size ?: 0
     }
 
+    fun File.countDirectories(
+        name: String,
+    ): Int {
+        return this.listFiles { file ->
+            file.nameWithoutExtension.startsWith(name) && file.isDirectory
+        }?.size ?: 0
+    }
+
 }

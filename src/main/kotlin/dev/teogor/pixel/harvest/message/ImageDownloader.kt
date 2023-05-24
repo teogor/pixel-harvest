@@ -48,8 +48,6 @@ object ImageDownloader {
         message: Message,
     ) {
         message.removeAllReaction(Emoji.FileDownloadQueue)
-        message.addReaction(Emoji.FileDownloading)
-
         val attachments = message.attachments
         val content = message.content
         val invokerId = message.data.mentions[0].value.toLong()
@@ -70,6 +68,7 @@ object ImageDownloader {
         }
 
         if (matches < 2) {
+            message.addReaction(Emoji.FileDownloading)
             if (attachments.isNotEmpty()) {
                 val basePath = "${getDownloadsFolderPath()}/${
                     BotManager.kord.getBasePathForImages(

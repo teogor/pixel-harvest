@@ -1,6 +1,7 @@
 package dev.teogor.pixel.harvest.slash
 
 import dev.kord.core.behavior.interaction.response.DeferredEphemeralMessageInteractionResponseBehavior
+import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
 import dev.kord.rest.builder.interaction.ChatInputCreateBuilder
@@ -11,29 +12,44 @@ import dev.teogor.pixel.harvest.BotManager.kord
 import dev.teogor.pixel.harvest.database.DatabaseManager.getTotalDownloadCountByDiscordUser
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.message.getBasePathForImages
+import dev.teogor.pixel.harvest.svg.ProcessingStep
 import dev.teogor.pixel.harvest.svg.ProgressData
 import dev.teogor.pixel.harvest.svg.ProgressListener
 import dev.teogor.pixel.harvest.svg.SvgConverter
+import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countDirectories
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
 import dev.teogor.pixel.harvest.utils.Colors
 import dev.teogor.pixel.harvest.utils.asBooleanOrDefault
 import dev.teogor.pixel.harvest.utils.asStringOrDefault
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import kotlin.random.Random
 
 sealed class SlashCommand {
     abstract val name: String
     abstract val description: String
 
+    open val deferredEphemeralResponse: Boolean
+        get() = true
+
     private fun execute(event: GuildChatInputCommandInteractionCreateEvent) {
         runBlocking {
             event.interaction.apply {
-                val response = deferEphemeralResponse()
-                action(this, response)
+                if (deferredEphemeralResponse) {
+                    val response = deferEphemeralResponse()
+                    action(this, response)
+                } else {
+                    val response = deferPublicResponse()
+                    action(this, response)
+                }
             }
         }
-        // action(event)
+    }
+
+    open suspend fun action(
+        interaction: GuildChatInputCommandInteraction,
+        response: DeferredPublicMessageInteractionResponseBehavior
+    ) {
+
     }
 
     open suspend fun action(
@@ -48,24 +64,14 @@ sealed class SlashCommand {
     }
 
     object GenerateSlashCommand : SlashCommand() {
+        private var isRunning = false
+
+        override val deferredEphemeralResponse: Boolean
+            get() = isRunning
+
         override val name: String = "generate"
 
         override val description: String = "Generate SVGs and scaled images for recent downloads."
-
-        // override val commandRequest: ApplicationCommandRequest
-        //     get() = ApplicationCommandRequest.builder()
-        //         .name(name)
-        //         .description("Generate SVGs and scaled images for recent downloads.")
-        //         .addOption(
-        //             ApplicationCommandOptionData.builder()
-        //                 .name("include-dataset")
-        //                 .description("Include dataset generation along with SVGs and scaled images.")
-        //                 .type(ApplicationCommandOption.Type.BOOLEAN.value)
-        //                 .required(false)
-        //                 .build()
-        //         )
-        //         .build()
-
 
         override fun withOptions(chatInputCreateBuilder: ChatInputCreateBuilder) {
             super.withOptions(chatInputCreateBuilder)
@@ -85,16 +91,33 @@ sealed class SlashCommand {
             interaction: GuildChatInputCommandInteraction,
             response: DeferredEphemeralMessageInteractionResponseBehavior
         ) {
-            super.action(interaction, response)
-
             var message = kord.rest.interaction.createFollowupMessage(
                 applicationId = interaction.applicationId,
                 interactionToken = response.token,
-                ephemeral = true
+                ephemeral = isRunning
             ) {
-                content = "Converting to svg in progress..."
+                content = if (!isRunning) "Process downloaded images. (Waiting to start)" else "Job already running."
             }
+            if (isRunning) {
+                return
+            }
+        }
 
+        override suspend fun action(
+            interaction: GuildChatInputCommandInteraction,
+            response: DeferredPublicMessageInteractionResponseBehavior
+        ) {
+            var message = kord.rest.interaction.createFollowupMessage(
+                applicationId = interaction.applicationId,
+                interactionToken = response.token,
+                ephemeral = isRunning
+            ) {
+                content = if (!isRunning) "Process downloaded images. (Waiting to start)" else "Job already running."
+            }
+            if (isRunning) {
+                return
+            }
+            isRunning = true
 
             val author = interaction.user
             val username = author.username
@@ -102,46 +125,115 @@ sealed class SlashCommand {
             val command = interaction.command
             val includeDataset = command.options["include-dataset"]?.value?.asBooleanOrDefault() ?: false
 
-            val rootPath = "${getDownloadsFolderPath()}\\${
-                kord.getBasePathForImages(
-                    interaction = interaction,
-                    haveChannel = false
-                )
-            }"
+            val baseDownloadPath = kord.getBasePathForImages(
+                interaction = interaction,
+                haveChannel = false
+            )
+            val rootPath = "${getDownloadsFolderPath()}\\$baseDownloadPath"
             val inputFolder = File(rootPath)
-            val outputFolder = File("${rootPath}\\converter")
+            val outputFolder = File("${rootPath}\\processed")
+            val imagesToProcess = inputFolder.countFiles("")
 
             val progressData = ProgressData(
-                totalDownloadedImages = 10,
-                currentScaledImages = 0,
-                currentSvgConverted = 0
+                currentIndex = 0,
+                processingStep = ProcessingStep.PARSING,
             )
-
-            // Create a progress listener or callback
+            val nextFolder = outputFolder.countDirectories("set") + 1
+            var totalTimeElapsed = 0L
+            var previousTime = System.currentTimeMillis()
+            var progressCalls = 0
             val progressListener = object : ProgressListener() {
                 override suspend fun onProgress(progressData: ProgressData) {
-                    // Update the progress of scaled images
-                    val progressMessage = "Images to be processed: ${progressData.totalDownloadedImages}"
+                    val currentTime = System.currentTimeMillis()
+                    val timeElapsed = currentTime - previousTime
+                    totalTimeElapsed += timeElapsed
+                    progressCalls++
+                    previousTime = currentTime
+
+                    val averageTime = totalTimeElapsed / progressCalls
+
+                    val currentIndex = when (progressData.processingStep) {
+                        ProcessingStep.PARSING -> 0
+                        ProcessingStep.GENERATING_SVG -> progressData.currentIndex
+                        ProcessingStep.SCALING_SVG -> imagesToProcess + progressData.currentIndex
+                        ProcessingStep.DONE -> imagesToProcess * 2
+                    }
+                    val percentage = (currentIndex.toDouble() / (imagesToProcess * 2).toDouble()) * 100
+                    val remainingIterations = imagesToProcess * 2 - currentIndex
+                    val estimatedRemainingTime = averageTime * remainingIterations
+
+                    val estimatedRemainingTimeText = if (progressData.processingStep == ProcessingStep.DONE) {
+                        "Done"
+                    } else if (estimatedRemainingTime > 0) {
+                        val remainingTimeSeconds = estimatedRemainingTime / 1000
+                        val remainingTimeMinutes = remainingTimeSeconds / 60
+                        val remainingTimeHours = remainingTimeMinutes / 60
+
+                        val hoursText = if (remainingTimeHours > 0) "${remainingTimeHours}h " else ""
+                        val minutesText = if (remainingTimeMinutes % 60 > 0) "${remainingTimeMinutes % 60}m " else ""
+                        val secondsText = if (remainingTimeSeconds % 60 > 0) "${remainingTimeSeconds % 60}s" else ""
+
+                        "Estimated Remaining Time: $hoursText$minutesText$secondsText"
+                    } else {
+                        "Estimated Remaining Time: Calculating..."
+                    }
+
+                    val stepDescription = when (progressData.processingStep) {
+                        ProcessingStep.PARSING -> "Parsing..."
+                        ProcessingStep.GENERATING_SVG -> "Generating SVGs: ${progressData.currentIndex} out of $imagesToProcess"
+                        ProcessingStep.SCALING_SVG -> "Scaling SVGs: ${progressData.currentIndex} out of $imagesToProcess"
+                        ProcessingStep.DONE -> "DONE"
+                    }
+
+                    val processingTitle = "Image Processing Progress: $percentage%"
+                    val imagesToProcessLabel = "Total Images to Process:"
+                    val currentStepLabel = "Current Step"
+                    val downloadLocationLabel = "Download Location (Output Folder)"
+                    val lineColor = if (progressData.processingStep == ProcessingStep.DONE) {
+                        Colors.LIME_GREEN
+                    } else {
+                        Colors.CORNFLOWER_BLUE
+                    }
+
+                    if (progressData.processingStep == ProcessingStep.DONE) {
+                        isRunning = false
+                    }
+
                     message = kord.rest.interaction.modifyFollowupMessage(
                         applicationId = interaction.applicationId,
                         interactionToken = response.token,
                         messageId = message.id,
                     ) {
-                        content = progressMessage
+                        content = ""
+                        embeds = mutableListOf(
+                            EmbedBuilder().apply {
+                                title = processingTitle
+                                description = """
+                        **$imagesToProcessLabel** `${imagesToProcess.toString().padStart(3, '0')}`
+                        
+                        **$currentStepLabel**
+                        $stepDescription
+                        
+                        $estimatedRemainingTimeText
+                        
+                        **$downloadLocationLabel:**
+                        `Downloads\${baseDownloadPath}processed\set-${nextFolder.toString().padStart(6, '0')}`
+                    """.trimIndent()
+                                color = lineColor
+                            }
+                        )
                     }
                 }
             }
 
-            progressListener.onProgress(
-                progressData.copy(
-                    totalDownloadedImages = inputFolder.countFiles("")
-                )
-            )
+            progressListener.onProgress(progressData)
 
             SvgConverter.Builder(inputFolder, outputFolder)
                 .withSvgGenerator(true)
                 .withSvgRasterizer(true)
-                .withBatchNumber(Random(System.currentTimeMillis()).nextInt(100000000, 999999999))
+                .withIncludeDataset(includeDataset)
+                .withBatchNumber(nextFolder)
+                .withProgressListener(progressListener)
                 .build()
 
         }

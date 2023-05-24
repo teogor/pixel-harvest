@@ -1,16 +1,25 @@
 package dev.teogor.pixel.harvest.svg
 
 import dev.teogor.pixel.harvest.svg.generator.SvgGenerator
+import dev.teogor.pixel.harvest.svg.generator.VectorizerAiToken
 import dev.teogor.pixel.harvest.svg.rasterizer.SvgFile
 import dev.teogor.pixel.harvest.svg.rasterizer.SvgRasterizer
 import dev.teogor.pixel.harvest.svg.rasterizer.processResult
 import dev.teogor.pixel.harvest.svg.utils.ImageExtension
+import dev.teogor.pixel.harvest.svg.utils.createDirectoryIfNotExists
 import dev.teogor.pixel.harvest.svg.utils.formatDuration
 import dev.teogor.pixel.harvest.svg.utils.generateFileNameTemplate
+import dev.teogor.pixel.harvest.svg.utils.generateRandomNumber
+import dev.teogor.pixel.harvest.svg.utils.getFormattedDate
+import dev.teogor.pixel.harvest.svg.utils.getFormattedDate2
 import dev.teogor.pixel.harvest.svg.utils.listFilesWithExtensions
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
 import kotlinx.coroutines.runBlocking
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder
+import org.apache.hc.client5.http.fluent.Request
+import org.apache.hc.core5.http.ClassicHttpResponse
 import java.io.File
+import java.io.FileWriter
 
 /**
  * The SvgConverter class provides functionality to convert SVG files and images.
@@ -30,8 +39,9 @@ class SvgConverter private constructor(
     private val outputFolder: File,
     private val generator: SvgGenerator,
     private val rasterizer: SvgRasterizer,
-    var useSvgGenerator: Boolean,
-    var useSvgRasterizer: Boolean,
+    private val useSvgGenerator: Boolean,
+    private val useSvgRasterizer: Boolean,
+    private val includeDataset: Boolean,
     private val progressListener: ProgressListener,
     private val batchNumber: Int,
 ) {
@@ -42,7 +52,7 @@ class SvgConverter private constructor(
         ""
     }
     private val generatorOutputDirectory: String = if (useSvgGenerator) {
-        "${outputFolder.path}/batch-${batchNumber.toString().padStart(6, '0')}"
+        "${outputFolder.path}/set-${batchNumber.toString().padStart(6, '0')}"
     } else {
         ""
     }
@@ -57,13 +67,14 @@ class SvgConverter private constructor(
     }
     private val rasterizerOutputDirectory: String = if (useSvgRasterizer) {
         if (useSvgGenerator) {
-            "$generatorOutputDirectory/image-export"
+            "$generatorOutputDirectory/scaled"
         } else {
             outputFolder.path
         }
     } else {
         ""
     }
+    val reportFile = File("$generatorOutputDirectory/report_${getFormattedDate()}.md")
 
     init {
         initializeConversion()
@@ -75,28 +86,123 @@ class SvgConverter private constructor(
      */
     private fun initializeConversion() {
         if (useSvgGenerator && useSvgRasterizer) {
-            convertToSvg()
-            convertToImage()
+            generateSvg()
+            rasterizeSvg()
         } else if (useSvgGenerator) {
-            convertToSvg()
+            generateSvg()
         } else if (useSvgRasterizer) {
-            convertToImage()
+            rasterizeSvg()
         }
+        val progressData = ProgressData(
+            currentIndex = 0,
+            processingStep = ProcessingStep.DONE,
+        )
+        dispatchProgress(
+            progressData = progressData,
+            currentIndex = 0,
+        )
     }
 
     /**
      * Converts images to SVG using the SvgGenerator.
      */
-    private fun convertToSvg() {
-        generator.inputDirectory = generatorInputDirectory
-        generator.outputDirectory = generatorOutputDirectory
-        generator.convertImages()
+    private fun generateSvg() {
+        val directoryInput = File(generatorInputDirectory)
+        val directoryExportSvg = "$generatorOutputDirectory/svg".createDirectoryIfNotExists()
+        val directoryExportImage = "$generatorOutputDirectory/original".createDirectoryIfNotExists()
+
+        if (!directoryExportSvg.exists()) {
+            directoryExportSvg.mkdir()
+        }
+        if (!directoryExportImage.exists()) {
+            directoryExportImage.mkdir()
+        }
+
+        FileWriter(reportFile, false).use { writer ->
+            writer.write("# ICR (${getFormattedDate2()})  \n")
+            writer.write("###### *ICR - Image Conversion Report  \n\n")
+        }
+
+        var currentFileIndex = 0
+        val imageExtensions = listOf("jpg", "jpeg", "png")
+        val progressData = ProgressData(
+            currentIndex = currentFileIndex,
+            processingStep = ProcessingStep.GENERATING_SVG,
+        )
+        dispatchProgress(
+            progressData = progressData,
+            currentIndex = currentFileIndex,
+        )
+        currentFileIndex++
+        directoryInput.listFilesWithExtensions(imageExtensions) { imageFile ->
+            val request = Request.post("https://vectorizer.ai/api/v1/vectorize")
+                .addHeader(
+                    "Authorization",
+                    "Basic $VectorizerAiToken"
+                )
+                .body(
+                    MultipartEntityBuilder.create()
+                        .addBinaryBody("image", imageFile)
+                        .build()
+                )
+            val response = request.execute().returnResponse() as ClassicHttpResponse
+
+            if (response.code == 200) {
+                val timestamp = getFormattedDate()
+                val randomNumber = generateRandomNumber()
+                val fileNameDataSet = "dataset_${timestamp}_$randomNumber"
+                val fileName = imageFile.nameWithoutExtension
+                val regex = Regex("(.+) \\(\\d+\\)")
+                val matchResult = regex.find(fileName)
+                val extractFileName = matchResult?.groupValues?.get(1) ?: fileName
+                val index = directoryExportImage.countFiles(extractFileName)
+                val fileNamePad = if (index == 0) {
+                    extractFileName
+                } else {
+                    "$extractFileName (${index.toString().padStart(4, '0')})"
+                }
+                val outputFileSvg = File("${directoryExportSvg}/${fileNamePad}.svg")
+                val outputFileImage = File("${directoryExportImage}/${fileNamePad}.${imageFile.extension}")
+                imageFile.copyTo(outputFileImage)
+                response.entity.writeTo(outputFileSvg.outputStream())
+                response.close()
+
+                FileWriter(reportFile, true).use { writer ->
+                    writer.write("### ${imageFile.nameWithoutExtension}  \n")
+                    writer.write("${outputFileSvg.nameWithoutExtension}: [SVG](${outputFileSvg.absoluteFile}), [${outputFileImage.extension.uppercase()}](${outputFileImage.absoluteFile})  \n")
+                }
+
+                // Delete the old file
+                if (imageFile.exists()) {
+                    // todo once the **model** is fine remove this
+                    // imageFile.delete()
+                }
+                dispatchProgress(
+                    progressData = progressData,
+                    currentIndex = currentFileIndex,
+                )
+                currentFileIndex++
+            }
+        }
+    }
+
+    private fun dispatchProgress(
+        progressData: ProgressData,
+        currentIndex: Int,
+    ) {
+        runBlocking {
+            progressListener.onProgress(
+                progressData.copy(
+                    currentIndex = currentIndex
+                )
+            )
+        }
     }
 
     /**
      * Converts SVG files to images using the SvgRasterizer.
      */
-    private fun convertToImage() {
+    private fun rasterizeSvg() {
         val directoryInput = File(rasterizerInputDirectory)
         val directoryExport = File(rasterizerOutputDirectory)
         val saveExtension = ImageExtension.JPEG
@@ -107,17 +213,16 @@ class SvgConverter private constructor(
         var totalSaveTime = 0L
         var processedCount = 0
 
+        var currentFileIndex = 0
         val progressData = ProgressData(
-            totalDownloadedImages = 0,
-            currentScaledImages = 0,
-            currentSvgConverted = 0
+            currentIndex = currentFileIndex,
+            processingStep = ProcessingStep.SCALING_SVG,
         )
-
-        runBlocking {
-            progressListener.onProgress(progressData.copy(
-                totalDownloadedImages = directoryInput.countFiles("")
-            ))
-        }
+        dispatchProgress(
+            progressData = progressData,
+            currentIndex = currentFileIndex,
+        )
+        currentFileIndex++
         directoryInput.listFilesWithExtensions(listOf("svg")) { svgFile ->
             val conversionResult = rasterizer.convert(
                 SvgFile(
@@ -163,6 +268,11 @@ class SvgConverter private constructor(
                     System.err.println(it.errorMessage)
                 },
             )
+            dispatchProgress(
+                progressData = progressData,
+                currentIndex = currentFileIndex,
+            )
+            currentFileIndex++
         }
 
         if (processedCount == 0) {
@@ -197,6 +307,7 @@ class SvgConverter private constructor(
     class Builder(private val inputFolder: File, private val outputFolder: File) {
         private var useSvgGenerator: Boolean = false
         private var useSvgRasterizer: Boolean = false
+        private var includeDataset: Boolean = false
         private var batchNumber: Int = 0
         private var progressListener: ProgressListener = object : ProgressListener() {
             override suspend fun onProgress(progressData: ProgressData) {
@@ -244,6 +355,16 @@ class SvgConverter private constructor(
         }
 
         /**
+         * Sets whether to include dataset for AI training.
+         *
+         * @param enabled Flag indicating whether to include dataset for AI training.
+         * @return The Builder instance.
+         */
+        fun withIncludeDataset(enabled: Boolean) = apply {
+            this.includeDataset = enabled
+        }
+
+        /**
          * Builds and returns an instance of SvgConverter with the specified parameters.
          *
          * @return An instance of SvgConverter.
@@ -255,6 +376,7 @@ class SvgConverter private constructor(
             rasterizer = SvgRasterizer(),
             useSvgGenerator = useSvgGenerator,
             useSvgRasterizer = useSvgRasterizer,
+            includeDataset = includeDataset,
             progressListener = progressListener,
             batchNumber = batchNumber,
         )
@@ -262,10 +384,16 @@ class SvgConverter private constructor(
 }
 
 data class ProgressData(
-    val totalDownloadedImages: Int,
-    val currentSvgConverted: Int,
-    val currentScaledImages: Int
+    val currentIndex: Int,
+    val processingStep: ProcessingStep,
 )
+
+enum class ProcessingStep {
+    PARSING,
+    GENERATING_SVG,
+    SCALING_SVG,
+    DONE
+}
 
 open class ProgressListener {
     open suspend fun onProgress(progressData: ProgressData) {

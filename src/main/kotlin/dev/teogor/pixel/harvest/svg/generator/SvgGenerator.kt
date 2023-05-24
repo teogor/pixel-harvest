@@ -11,6 +11,9 @@ import org.apache.hc.core5.http.ClassicHttpResponse
 import java.io.File
 import java.io.FileWriter
 
+const val VectorizerAiToken =
+    "dmt4czc5anJwYWd2NmVmOnRyNnRxdW1wcTljYjc0ZjIwNDMzZTVqNmF0cXJuMjBhNHEwOHIzMDZkcXZpZTNxM2t0a3Y="
+
 /**
  * A utility class for converting images to SVG format using the vectorizer.ai API.
  *
@@ -20,8 +23,6 @@ import java.io.FileWriter
  */
 class SvgGenerator {
 
-    private val apiToken =
-        "dmt4czc5anJwYWd2NmVmOnRyNnRxdW1wcTljYjc0ZjIwNDMzZTVqNmF0cXJuMjBhNHEwOHIzMDZkcXZpZTNxM2t0a3Y="
 
     var inputDirectory: String = ""
     var outputDirectory: String = ""
@@ -53,7 +54,7 @@ class SvgGenerator {
             val request = Request.post("https://vectorizer.ai/api/v1/vectorize")
                 .addHeader(
                     "Authorization",
-                    "Basic $apiToken"
+                    "Basic $VectorizerAiToken"
                 )
                 .body(
                     MultipartEntityBuilder.create()
@@ -80,7 +81,7 @@ class SvgGenerator {
                 // Delete the old file
                 if (imageFile.exists()) {
                     // todo once the **model** is fine remove this
-                    imageFile.delete()
+                    // imageFile.delete()
                 }
             }
         }
