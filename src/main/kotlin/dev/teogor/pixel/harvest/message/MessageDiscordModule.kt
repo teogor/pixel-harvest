@@ -1,6 +1,7 @@
 package dev.teogor.pixel.harvest.message
 
 import dev.kord.core.entity.Message
+import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.User
 import dev.kord.core.event.Event
 import dev.kord.core.event.message.MessageCreateEvent
@@ -10,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import dev.teogor.pixel.harvest.database.DatabaseManager.addUser
 import dev.teogor.pixel.harvest.models.Bot
 import dev.teogor.pixel.harvest.models.Developer
+import dev.teogor.pixel.harvest.utils.Emoji
 import kotlinx.coroutines.delay
 import java.time.Duration
 
@@ -61,16 +63,19 @@ class MessageDiscordModule : DiscordModule() {
         }
 
         val emoji = event.emoji
-        if (emoji.name == "❌") {
+
+        if (emoji is ReactionEmoji.Custom) {
+            val relevantEmoji = Emoji.fromReactionEmoji(emoji)
+            if (relevantEmoji is Emoji.FileDownloadQueue) {
+                runBlocking {
+                    ImageDownloader.addToQueue(
+                        message = event.message.fetchMessage()
+                    )
+                }
+            }
+        } else if (emoji.name == "❌") {
             runBlocking {
                 event.message.delete(reason = "marked with ❌")
-            }
-        } else if (emoji.name == "📁") {
-            runBlocking {
-                val message = event.message.fetchMessage()
-                ImageDownloader.addToQueue(
-                    message = message
-                )
             }
         }
     }

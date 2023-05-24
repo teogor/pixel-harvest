@@ -1,5 +1,6 @@
 package dev.teogor.pixel.harvest.message
 
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
@@ -8,7 +9,9 @@ import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.teogor.pixel.harvest.BotManager
 import dev.teogor.pixel.harvest.database.DatabaseManager.addDownload
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
+import dev.teogor.pixel.harvest.models.Bot
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
+import dev.teogor.pixel.harvest.utils.Emoji
 import dev.teogor.pixel.harvest.utils.createDirectoryIfNotExists
 import dev.teogor.pixel.harvest.utils.extractFilename
 import kotlinx.coroutines.runBlocking
@@ -22,6 +25,7 @@ object ImageDownloader {
     private var isDownloading: Boolean = false
 
     fun addToQueue(message: Message) {
+        message.addReaction(Emoji.FileDownloadQueue)
         downloadQueue.add(message)
 
         if (!isDownloading) {
@@ -43,6 +47,9 @@ object ImageDownloader {
     private fun downloadImages(
         message: Message,
     ) {
+        message.removeAllReaction(Emoji.FileDownloadQueue)
+        message.addReaction(Emoji.FileDownloading)
+
         val attachments = message.attachments
         val content = message.content
         val invokerId = message.data.mentions[0].value.toLong()
@@ -109,11 +116,35 @@ object ImageDownloader {
                     outputStream.close()
                     inputStream.close()
 
-                    runBlocking {
-                        message.addReaction(ReactionEmoji.Unicode("📁"))
-                    }
+                    message.removeReaction(Emoji.FileDownloading)
+                    message.addReaction(Emoji.FileDownloaded)
                 }
             }
+        }
+    }
+}
+
+fun Message.addReaction(emoji: Emoji) {
+    runBlocking {
+        addReaction(emoji.asReactionEmoji())
+    }
+}
+
+fun Message.removeAllReaction(emoji: Emoji) {
+    runBlocking {
+        deleteReaction(emoji.asReactionEmoji())
+    }
+}
+
+fun Message.removeReaction(emoji: Emoji) {
+    runBlocking {
+        emoji.asReactionEmoji().let {
+            kord.rest.channel.deleteReaction(
+                channelId = channelId,
+                messageId = id,
+                userId = Snowflake(Bot.PixelHarvestBot.id),
+                emoji = it.urlFormat
+            )
         }
     }
 }
