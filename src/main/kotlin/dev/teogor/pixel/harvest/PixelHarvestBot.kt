@@ -11,6 +11,7 @@ class PixelHarvestBot(private val token: String) {
 
     fun start() {
         runBlocking {
+            println("Preparing Discord Bot...")
             BotManager.kord = Kord(token)
             val kord = BotManager.kord
 
@@ -22,6 +23,7 @@ class PixelHarvestBot(private val token: String) {
                 bind()
             }
 
+            println("Attempting to Log In...")
             kord.login {
                 @OptIn(PrivilegedIntent::class)
                 intents += Intents.all

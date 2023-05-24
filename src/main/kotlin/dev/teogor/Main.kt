@@ -10,9 +10,12 @@ import io.github.cdimascio.dotenv.dotenv
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
+        println("Application Starting...")
+        println("Retrieving Bot Token...")
         val dotenv = dotenv()
         val botToken = dotenv["BOT_TOKEN"]
         if (botToken != null) {
+            println("Bot Token Retrieved.")
             val botBeta = PixelHarvestBot(botToken)
             botBeta.start()
         } else {

@@ -30,6 +30,7 @@ class SlashDiscordModule : DiscordModule() {
     }
 
     private fun registerSlashCommands(event: ReadyEvent) {
+        println("Logged In!")
         event.apply {
             this.guilds.map { guild ->
                 if (deleteSlashCommands) {
