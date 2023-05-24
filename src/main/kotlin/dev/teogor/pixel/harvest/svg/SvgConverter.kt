@@ -146,15 +146,17 @@ class SvgConverter private constructor(
             currentIndex = 0,
         )
 
-        FileWriter(reportFile, false).use { writer ->
-            writer.write("# ICR (${getFormattedDate2()})  \n")
-            writer.write("###### *ICR - Image Conversion Report  \n\n")
-        }
+        if (useSvgGenerator && useSvgRasterizer) {
+            FileWriter(reportFile, false).use { writer ->
+                writer.write("# ICR (${getFormattedDate2()})  \n")
+                writer.write("###### *ICR - Image Conversion Report  \n\n")
+            }
 
-        outputLines.forEach {
-            FileWriter(reportFile, true).use { writer ->
-                writer.write("### ${it.name}  \n")
-                writer.write("Download Variant Locations: [SVG](${it.svgFile.absoluteFile}), [ORIGINAL (*${it.originalFile.extension.uppercase()})](${it.originalFile.absoluteFile}), [Scaled (*${it.scaledFile.extension.uppercase()})](${it.scaledFile.absoluteFile})  \n")
+            outputLines.forEach {
+                FileWriter(reportFile, true).use { writer ->
+                    writer.write("### ${it.name}  \n")
+                    writer.write("Download Variant Locations: [SVG](${it.svgFile.absoluteFile}), [ORIGINAL (*${it.originalFile.extension.uppercase()})](${it.originalFile.absoluteFile}), [Scaled (*${it.scaledFile.extension.uppercase()})](${it.scaledFile.absoluteFile})  \n")
+                }
             }
         }
     }
@@ -309,10 +311,12 @@ class SvgConverter private constructor(
                         totalScaleTime += scaleTime
                         totalSaveTime += saveTime
                         processedCount++
-                        outputLines[currentFileIndex - 1] = ImageReport.SvgRasterizerReport.from(
-                            outputLines[currentFileIndex - 1],
-                            fileInfo.outputFile
-                        )
+                        if (useSvgGenerator && useSvgRasterizer) {
+                            outputLines[currentFileIndex - 1] = ImageReport.SvgRasterizerReport.from(
+                                outputLines[currentFileIndex - 1],
+                                fileInfo.outputFile
+                            )
+                        }
                     }
                 },
                 onError = {
