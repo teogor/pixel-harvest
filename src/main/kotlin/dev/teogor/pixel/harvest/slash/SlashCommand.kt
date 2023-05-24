@@ -1,17 +1,23 @@
 package dev.teogor.pixel.harvest.slash
 
+import dev.kord.common.Color
 import dev.kord.core.behavior.interaction.response.DeferredEphemeralMessageInteractionResponseBehavior
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
 import dev.kord.rest.builder.interaction.ChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.boolean
 import dev.kord.rest.builder.interaction.string
+import dev.kord.rest.builder.message.EmbedBuilder
 import dev.teogor.pixel.harvest.BotManager.kord
+import dev.teogor.pixel.harvest.database.DatabaseManager.getTotalDownloadCountByDiscordUser
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.message.getBasePathForImages
 import dev.teogor.pixel.harvest.svg.ProgressData
 import dev.teogor.pixel.harvest.svg.ProgressListener
 import dev.teogor.pixel.harvest.svg.SvgConverter
+import dev.teogor.pixel.harvest.utils.Colors
+import dev.teogor.pixel.harvest.utils.asBooleanOrDefault
+import dev.teogor.pixel.harvest.utils.asStringOrDefault
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.random.Random
@@ -264,42 +270,3 @@ sealed class SlashCommand {
         }
     }
 }
-
-fun Any?.asBooleanOrDefault(defaultValue: Boolean = false): Boolean {
-    return try {
-        this?.toString()?.toBoolean() ?: defaultValue
-    } catch (e: IllegalArgumentException) {
-        defaultValue
-    }
-}
-
-fun Any?.asFloatOrDefault(defaultValue: Float = 0.0f): Float {
-    return try {
-        this?.toString()?.toFloat() ?: defaultValue
-    } catch (e: NumberFormatException) {
-        defaultValue
-    }
-}
-
-fun Any?.asStringOrDefault(defaultValue: String = ""): String {
-    return this?.toString() ?: defaultValue
-}
-
-fun Any?.asIntOrDefault(defaultValue: Int? = null): Int? {
-    return try {
-        this?.toString()?.toInt() ?: defaultValue
-    } catch (e: NumberFormatException) {
-        defaultValue
-    }
-}
-
-fun Any?.asLongOrDefault(defaultValue: Long? = null): Long? {
-    return try {
-        this?.toString()?.toLong() ?: defaultValue
-    } catch (e: NumberFormatException) {
-        defaultValue
-    }
-}
-
-
-
