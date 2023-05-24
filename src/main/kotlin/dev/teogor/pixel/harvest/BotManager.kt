@@ -1,9 +1,7 @@
 package dev.teogor.pixel.harvest
 
-import discord4j.core.DiscordClient
-import discord4j.core.GatewayDiscordClient
+import dev.kord.core.Kord
 
 object BotManager {
-    lateinit var client: DiscordClient
-    lateinit var gateway: GatewayDiscordClient
+    lateinit var kord: Kord
 }

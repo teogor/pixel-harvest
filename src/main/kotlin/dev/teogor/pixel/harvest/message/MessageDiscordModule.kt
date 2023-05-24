@@ -1,24 +1,25 @@
 package dev.teogor.pixel.harvest.message
 
-import dev.teogor.pixel.harvest.database.DatabaseManager.addUser
+import dev.kord.core.entity.Message
+import dev.kord.core.event.Event
+import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.message.ReactionAddEvent
 import dev.teogor.pixel.harvest.DiscordModule
-import dev.teogor.pixel.harvest.discord.deleteMessageAfterDelay
+import kotlinx.coroutines.runBlocking
+import dev.teogor.pixel.harvest.database.DatabaseManager.addUser
 import dev.teogor.pixel.harvest.models.Bot
 import dev.teogor.pixel.harvest.models.Developer
-import discord4j.core.event.domain.Event
-import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.event.domain.message.ReactionAddEvent
+import kotlinx.coroutines.delay
 import java.time.Duration
 
-
 class MessageDiscordModule : DiscordModule() {
-
-    override val events = listOf(
+    override val events: List<Class<out Event>> = listOf(
         MessageCreateEvent::class.java,
         ReactionAddEvent::class.java
     )
 
-    override fun subscribeGateway(event: Event) {
+    override fun subscribe(event: Event) {
+        // Implement your event handling logic here
         when (event) {
             is MessageCreateEvent -> onMessageReceived(event)
             is ReactionAddEvent -> deleteMessage(event)
@@ -27,20 +28,18 @@ class MessageDiscordModule : DiscordModule() {
 
     private fun onMessageReceived(event: MessageCreateEvent) {
         val message = event.message
-        val authorId = message.author.orElse(null)?.id?.asLong() ?: return
-        val author = message.author
+        val authorId = message.author?.id?.value?.toLong() ?: return
+        val author = message.author!!
         addUser(
             discordId = authorId,
-            username = author.get().username,
+            username = author.username,
         )
         if (Bot.MidJourneyBot.isBotIdMatch(authorId)) {
             ImageDownloader.downloadImages(
-                client = client,
                 event = event
             )
         } else if (Bot.NijiBot.isBotIdMatch(authorId)) {
             ImageDownloader.downloadImages(
-                client = client,
                 event = event
             )
         } else if (Developer.TeogorDeveloper.isDeveloperIdMatch(authorId)) {
@@ -50,9 +49,17 @@ class MessageDiscordModule : DiscordModule() {
 
     private fun deleteMessage(event: ReactionAddEvent) {
         val emoji = event.emoji
-        if (emoji.asUnicodeEmoji().map { it.raw }.orElse("") == "❌") {
-            // todo error stacktrace when added to Midjourney Bot
-            event.message.block()?.delete()?.subscribe()
+        if (emoji.name == "❌") {
+            runBlocking {
+                event.message.delete(reason = "marked with ❌")
+            }
         }
+    }
+}
+
+fun Message.deleteMessageAfterDelay(delay: Duration) {
+    runBlocking {
+        delay(delay.toMillis())
+        delete(reason = "autodelete for developer")
     }
 }

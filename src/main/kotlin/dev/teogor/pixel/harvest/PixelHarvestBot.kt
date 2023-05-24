@@ -1,48 +1,31 @@
 package dev.teogor.pixel.harvest
 
-import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
+import dev.kord.core.Kord
+import dev.kord.gateway.Intents
+import dev.kord.gateway.PrivilegedIntent
 import dev.teogor.pixel.harvest.message.MessageDiscordModule
-import dev.teogor.pixel.harvest.slash.CommandDiscordModule
-import dev.teogor.pixel.harvest.svg.SvgConverter
-import discord4j.core.DiscordClient
-import java.io.File
+import dev.teogor.pixel.harvest.slash.SlashDiscordModule
+import kotlinx.coroutines.runBlocking
 
-class PixelHarvestBot(token: String) {
-    private val client: DiscordClient = DiscordClient.create(token)
+class PixelHarvestBot(private val token: String) {
 
     fun start() {
-        val gateway = client.login().block() ?: return
+        runBlocking {
+            BotManager.kord = Kord(token)
+            val kord = BotManager.kord
 
-        println("Logged In!")
+            MessageDiscordModule().apply {
+                bind()
+            }
 
-        BotManager.client = client
-        BotManager.gateway = gateway
+            SlashDiscordModule().apply {
+                bind()
+            }
 
-        MessageDiscordModule().apply {
-            bindGateway()
+            kord.login {
+                @OptIn(PrivilegedIntent::class)
+                intents += Intents.all
+            }
         }
-
-        CommandDiscordModule().apply {
-            bindGateway()
-            setupTestCommands()
-        }
-
-        val rootPath = "${getDownloadsFolderPath()}\\PixelHarvest\\ZeoAI-Automation\\images".replace("\\", "/")
-        val inputFolder = File(rootPath)
-        val outputFolder = File("${rootPath}\\converter")
-
-        SvgConverter.Builder(inputFolder, outputFolder)
-            .withSvgGenerator(true)
-            .withSvgRasterizer(true)
-            .withBatchNumber(3)
-            .build()
-
-        keepBotAlive()
-    }
-}
-
-private fun keepBotAlive() {
-    while (true) {
-        Thread.sleep(1000)
     }
 }

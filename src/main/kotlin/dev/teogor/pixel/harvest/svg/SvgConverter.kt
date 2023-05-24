@@ -8,6 +8,8 @@ import dev.teogor.pixel.harvest.svg.utils.ImageExtension
 import dev.teogor.pixel.harvest.svg.utils.formatDuration
 import dev.teogor.pixel.harvest.svg.utils.generateFileNameTemplate
 import dev.teogor.pixel.harvest.svg.utils.listFilesWithExtensions
+import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 /**
@@ -30,6 +32,7 @@ class SvgConverter private constructor(
     private val rasterizer: SvgRasterizer,
     var useSvgGenerator: Boolean,
     var useSvgRasterizer: Boolean,
+    private val progressListener: ProgressListener,
     private val batchNumber: Int,
 ) {
 
@@ -104,6 +107,17 @@ class SvgConverter private constructor(
         var totalSaveTime = 0L
         var processedCount = 0
 
+        val progressData = ProgressData(
+            totalDownloadedImages = 0,
+            currentScaledImages = 0,
+            currentSvgConverted = 0
+        )
+
+        runBlocking {
+            progressListener.onProgress(progressData.copy(
+                totalDownloadedImages = directoryInput.countFiles("")
+            ))
+        }
         directoryInput.listFilesWithExtensions(listOf("svg")) { svgFile ->
             val conversionResult = rasterizer.convert(
                 SvgFile(
@@ -184,6 +198,10 @@ class SvgConverter private constructor(
         private var useSvgGenerator: Boolean = false
         private var useSvgRasterizer: Boolean = false
         private var batchNumber: Int = 0
+        private var progressListener: ProgressListener = object : ProgressListener() {
+            override suspend fun onProgress(progressData: ProgressData) {
+            }
+        }
 
         /**
          * Sets whether to use the SvgGenerator.
@@ -216,6 +234,16 @@ class SvgConverter private constructor(
         }
 
         /**
+         * Sets a custom progress listener for tracking the progress of image conversion.
+         *
+         * @param listener The progress listener to be set.
+         * @return The Builder instance.
+         */
+        fun withProgressListener(listener: ProgressListener) = apply {
+            this.progressListener = listener
+        }
+
+        /**
          * Builds and returns an instance of SvgConverter with the specified parameters.
          *
          * @return An instance of SvgConverter.
@@ -227,7 +255,19 @@ class SvgConverter private constructor(
             rasterizer = SvgRasterizer(),
             useSvgGenerator = useSvgGenerator,
             useSvgRasterizer = useSvgRasterizer,
+            progressListener = progressListener,
             batchNumber = batchNumber,
         )
+    }
+}
+
+data class ProgressData(
+    val totalDownloadedImages: Int,
+    val currentSvgConverted: Int,
+    val currentScaledImages: Int
+)
+
+open class ProgressListener {
+    open suspend fun onProgress(progressData: ProgressData) {
     }
 }

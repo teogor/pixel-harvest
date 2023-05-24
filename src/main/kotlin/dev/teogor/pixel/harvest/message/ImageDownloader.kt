@@ -1,13 +1,16 @@
 package dev.teogor.pixel.harvest.message
 
+import dev.kord.core.Kord
+import dev.kord.core.entity.channel.Channel
+import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
+import dev.kord.core.event.message.MessageCreateEvent
+import dev.teogor.pixel.harvest.BotManager
 import dev.teogor.pixel.harvest.database.DatabaseManager.addDownload
-import dev.teogor.pixel.harvest.discord.PathUtils.getBasePathForImages
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
 import dev.teogor.pixel.harvest.utils.createDirectoryIfNotExists
 import dev.teogor.pixel.harvest.utils.extractFilename
-import discord4j.core.DiscordClient
-import discord4j.core.event.domain.message.MessageCreateEvent
+import kotlinx.coroutines.runBlocking
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -15,34 +18,36 @@ import java.net.URL
 
 object ImageDownloader {
     internal fun downloadImages(
-        client: DiscordClient,
         event: MessageCreateEvent,
     ) {
         val attachments = event.message.attachments
         val message = event.message.content
-        val invoker = event.message.data.mentions()[0]
-        val invokerId = invoker.id().asLong()
+        val invokerId = event.message.data.mentions[0].value.toLong()
 
         var matches = 0
-        event.message.components.forEach { component ->
-            component.data.components().get().forEach { element ->
-                if (!element.label().isAbsent) {
-                    val label = element.label().get()
-                    val pattern = Regex("^[UV][1-4]$")
-                    if (pattern.matches(label)) {
-                        matches++
+        val componentsOptional = event.message.data.components
+        componentsOptional.value?.let {
+            it.forEach { component ->
+                component.components.value?.forEach { element ->
+                    element.label.value?.let { label ->
+                        val pattern = Regex("^[UV][1-4]$")
+                        if (pattern.matches(label)) {
+                            matches++
+                        }
                     }
                 }
             }
         }
+
         if (matches < 2) {
             if (attachments.isNotEmpty()) {
                 val basePath = "${getDownloadsFolderPath()}/${
-                    client.getBasePathForImages(
+                    BotManager.kord.getBasePathForImages(
                         event = event,
                         haveChannel = false
                     )
                 }"
+
                 val rootDirectory = basePath.createDirectoryIfNotExists()
                 rootDirectory.mkdirs()
 
@@ -84,4 +89,46 @@ object ImageDownloader {
             }
         }
     }
+}
+
+fun Kord.getBasePathForImages(
+    event: MessageCreateEvent,
+    haveChannel: Boolean = true,
+): String {
+    var basePath: String
+    runBlocking {
+        val guild = event.getGuildOrNull()?.data
+        val channelId = event.message.channelId
+        val channel = getChannelOf<Channel>(channelId)
+        val serverName = guild?.name?.replace(" ", "-") ?: "Unknown Server"
+        val channelName = channel?.data?.name?.value?.replace(" ", "-") ?: "Unknown Channel"
+
+        basePath = if (haveChannel) {
+            "PixelHarvest/$serverName/images/$channelName/"
+        } else {
+            "PixelHarvest/$serverName/images/"
+        }
+    }
+    return basePath.replace("/", "\\")
+}
+
+fun Kord.getBasePathForImages(
+    interaction: GuildChatInputCommandInteraction,
+    haveChannel: Boolean = true,
+): String {
+    var basePath: String
+    runBlocking {
+        val guild = interaction.getGuildOrNull()?.data
+        val channelId = interaction.channelId
+        val channel = getChannelOf<Channel>(channelId)
+        val serverName = guild?.name?.replace(" ", "-") ?: "Unknown Server"
+        val channelName = channel?.data?.name?.value?.replace(" ", "-") ?: "Unknown Channel"
+
+        basePath = if (haveChannel) {
+            "PixelHarvest/$serverName/images/$channelName/"
+        } else {
+            "PixelHarvest/$serverName/images/"
+        }
+    }
+    return basePath.replace("/", "\\")
 }

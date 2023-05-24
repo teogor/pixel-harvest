@@ -13,8 +13,8 @@ object Main {
         val dotenv = dotenv()
         val botToken = dotenv["BOT_TOKEN"]
         if (botToken != null) {
-            val bot = PixelHarvestBot(botToken)
-            bot.start()
+            val botBeta = PixelHarvestBot(botToken)
+            botBeta.start()
         } else {
             println("Please provide a token using the BOT_TOKEN environment variable.")
         }

@@ -16,7 +16,7 @@ application {
 }
 
 dependencies {
-    implementation("com.discord4j:discord4j-core:3.2.4")
+    // implementation("com.discord4j:discord4j-core:3.2.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("com.drewnoakes:metadata-extractor:2.18.0")
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
@@ -32,6 +32,12 @@ dependencies {
     implementation("org.apache.xmlgraphics:batik-parser:1.14")
     implementation("org.apache.httpcomponents.client5:httpclient5-fluent:5.0.4")
     implementation("org.apache.httpcomponents:httpcore:4.4.14")
+
+    // kord
+    implementation("dev.kord:kord-core:0.9.0")
+    implementation("dev.kord:kord-common:0.9.0")
+    implementation("dev.kord:kord-rest:0.9.0")
+    implementation("dev.kord:kord-gateway:0.9.0")
 
     // logging
     implementation("org.slf4j:slf4j-api:1.7.32")
