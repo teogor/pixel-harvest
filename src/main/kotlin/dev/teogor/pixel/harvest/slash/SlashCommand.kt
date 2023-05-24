@@ -257,12 +257,32 @@ sealed class SlashCommand {
         }
     }
 
+    object PingCommand : SlashCommand() {
+        override val name: String = "ping"
+
+        override val description: String = "Ping! \uD83C\uDFD3"
+
+        override suspend fun action(
+            interaction: GuildChatInputCommandInteraction,
+            response: DeferredEphemeralMessageInteractionResponseBehavior
+        ) {
+            kord.rest.interaction.createFollowupMessage(
+                applicationId = interaction.applicationId,
+                interactionToken = response.token,
+                ephemeral = true
+            ) {
+                content = "Pong! \uD83C\uDFD3 `${kord.gateway.averagePing}`"
+            }
+        }
+    }
+
     companion object {
         private val commands: List<SlashCommand> = listOf(
             GenerateSlashCommand,
             GreetSlashCommand,
             InfoSlashCommand,
             SettingsSlashCommand,
+            PingCommand,
         )
 
         fun forEachCommand(action: (SlashCommand) -> Unit) {
