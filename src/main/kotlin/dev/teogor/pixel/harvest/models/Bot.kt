@@ -22,9 +22,18 @@ sealed class Bot {
         override val name: String = "Midjourney"
     }
 
+    /**
+     * Represents the Niji bot.
+     */
+    object NijiBot : Bot() {
+        override val id: Long = 1022952195194359889
+        override val name: String = "Niji"
+    }
+
     companion object {
         private val botIds: List<Bot> = listOf(
-            MidJourneyBot
+            MidJourneyBot,
+            NijiBot,
         )
 
         /**

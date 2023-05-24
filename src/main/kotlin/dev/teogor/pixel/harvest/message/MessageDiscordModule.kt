@@ -43,8 +43,12 @@ class MessageDiscordModule(
                 client = client,
                 event = event
             )
-        }
-        if (Developer.TeogorDeveloper.isDeveloperIdMatch(authorId)) {
+        } else if (Bot.NijiBot.isBotIdMatch(authorId)) {
+            ImageDownloader.downloadImages(
+                client = client,
+                event = event
+            )
+        } else if (Developer.TeogorDeveloper.isDeveloperIdMatch(authorId)) {
             message.deleteMessageAfterDelay(Duration.ofSeconds(10))
         }
     }
