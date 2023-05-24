@@ -20,6 +20,7 @@ import org.apache.hc.client5.http.fluent.Request
 import org.apache.hc.core5.http.ClassicHttpResponse
 import java.io.File
 import java.io.FileWriter
+import java.net.URI
 
 /**
  * The SvgConverter class provides functionality to convert SVG files and images.
@@ -74,7 +75,51 @@ class SvgConverter private constructor(
     } else {
         ""
     }
-    val reportFile = File("$generatorOutputDirectory/report_${getFormattedDate()}.md")
+    private val reportFile = File("$generatorOutputDirectory/report_${getFormattedDate()}.md")
+    private val outputLines = mutableListOf<ImageReport>()
+
+    private sealed class ImageReport(
+        val name: String,
+        val svgFile: File,
+        val originalFile: File,
+        val scaledFile: File,
+    ) {
+
+        class SvgGeneratorReport(
+            name: String,
+            svgFile: File,
+            originalFile: File,
+        ) : ImageReport(
+            name,
+            svgFile,
+            originalFile,
+            File("")
+        )
+
+        class SvgRasterizerReport(
+            name: String,
+            svgFile: File,
+            scaledFile: File,
+            originalFile: File,
+        ) : ImageReport(
+            name,
+            svgFile,
+            originalFile,
+            scaledFile,
+        ) {
+            companion object {
+                fun from(imageReport: ImageReport, svgFile: File): SvgRasterizerReport {
+                    return SvgRasterizerReport(
+                        imageReport.name,
+                        imageReport.svgFile,
+                        imageReport.scaledFile,
+                        svgFile
+                    )
+                }
+            }
+        }
+
+    }
 
     init {
         initializeConversion()
@@ -93,14 +138,25 @@ class SvgConverter private constructor(
         } else if (useSvgRasterizer) {
             rasterizeSvg()
         }
-        val progressData = ProgressData(
-            currentIndex = 0,
-            processingStep = ProcessingStep.DONE,
-        )
         dispatchProgress(
-            progressData = progressData,
+            progressData = ProgressData(
+                currentIndex = 0,
+                processingStep = ProcessingStep.DONE,
+            ),
             currentIndex = 0,
         )
+
+        FileWriter(reportFile, false).use { writer ->
+            writer.write("# ICR (${getFormattedDate2()})  \n")
+            writer.write("###### *ICR - Image Conversion Report  \n\n")
+        }
+
+        outputLines.forEach {
+            FileWriter(reportFile, true).use { writer ->
+                writer.write("### ${it.name}  \n")
+                writer.write("Download Variant Locations: [SVG](${it.svgFile.absoluteFile}), [ORIGINAL (*${it.originalFile.extension.uppercase()})](${it.originalFile.absoluteFile}), [Scaled (*${it.scaledFile.extension.uppercase()})](${it.scaledFile.absoluteFile})  \n")
+            }
+        }
     }
 
     /**
@@ -154,13 +210,9 @@ class SvgConverter private constructor(
                 val fileName = imageFile.nameWithoutExtension
                 val regex = Regex("(.+) \\(\\d+\\)")
                 val matchResult = regex.find(fileName)
-                val extractFileName = matchResult?.groupValues?.get(1) ?: fileName
-                val index = directoryExportImage.countFiles(extractFileName)
-                val fileNamePad = if (index == 0) {
-                    extractFileName
-                } else {
-                    "$extractFileName (${index.toString().padStart(4, '0')})"
-                }
+                val extractFileName = (matchResult?.groupValues?.get(1) ?: fileName).replace(" ", "_")
+                val index = directoryExportImage.countFiles(extractFileName) + 1
+                val fileNamePad = "${extractFileName}_${index.toString().padStart(4, '0')}"
                 val outputFileSvg = File("${directoryExportSvg}/${fileNamePad}.svg")
                 val outputFileImage = File("${directoryExportImage}/${fileNamePad}.${imageFile.extension}")
                 imageFile.copyTo(outputFileImage)
@@ -169,7 +221,17 @@ class SvgConverter private constructor(
 
                 FileWriter(reportFile, true).use { writer ->
                     writer.write("### ${imageFile.nameWithoutExtension}  \n")
-                    writer.write("${outputFileSvg.nameWithoutExtension}: [SVG](${outputFileSvg.absoluteFile}), [${outputFileImage.extension.uppercase()}](${outputFileImage.absoluteFile})  \n")
+                    val outputFileSvgPath = outputFileSvg.absolutePath
+                    val outputFileImagePath = outputFileImage.absolutePath
+                    writer.write("Download Variant Locations:  [SVG]($outputFileSvgPath), [${outputFileImage.extension.uppercase()}]($outputFileImagePath)  \n")
+
+                    outputLines.add(
+                        ImageReport.SvgGeneratorReport(
+                            name = imageFile.nameWithoutExtension,
+                            svgFile = outputFileSvg,
+                            originalFile = outputFileImage
+                        )
+                    )
                 }
 
                 // Delete the old file
@@ -183,19 +245,6 @@ class SvgConverter private constructor(
                 )
                 currentFileIndex++
             }
-        }
-    }
-
-    private fun dispatchProgress(
-        progressData: ProgressData,
-        currentIndex: Int,
-    ) {
-        runBlocking {
-            progressListener.onProgress(
-                progressData.copy(
-                    currentIndex = currentIndex
-                )
-            )
         }
     }
 
@@ -251,17 +300,21 @@ class SvgConverter private constructor(
             conversionResult.processResult(
                 onSuccess = {
                     with(it) {
-                        println("SVG scaled and saved successfully as ${fileInfo.outputFile.name}!")
-                        println("Processing Time: ${totalTime.formatDuration()}")
-                        println("Loading Time:    ${loadTime.formatDuration()}")
-                        println("Scaling Time:    ${scaleTime.formatDuration()}")
-                        println("Saving Time:     ${saveTime.formatDuration()}")
-                        println("")
+                        // println("SVG scaled and saved successfully as ${fileInfo.outputFile.name}!")
+                        // println("Processing Time: ${totalTime.formatDuration()}")
+                        // println("Loading Time:    ${loadTime.formatDuration()}")
+                        // println("Scaling Time:    ${scaleTime.formatDuration()}")
+                        // println("Saving Time:     ${saveTime.formatDuration()}")
+                        // println("")
                         totalProcessingTime += totalTime
                         totalLoadTime += loadTime
                         totalScaleTime += scaleTime
                         totalSaveTime += saveTime
                         processedCount++
+                        outputLines[currentFileIndex - 1] = ImageReport.SvgRasterizerReport.from(
+                            outputLines[currentFileIndex - 1],
+                            fileInfo.outputFile
+                        )
                     }
                 },
                 onError = {
@@ -279,21 +332,32 @@ class SvgConverter private constructor(
             return
         }
 
-        val averageProcessingTime = totalProcessingTime / processedCount
-        val averageLoadTime = totalLoadTime / processedCount
-        val averageScaleTime = totalScaleTime / processedCount
-        val averageSaveTime = totalSaveTime / processedCount
+        // val averageProcessingTime = totalProcessingTime / processedCount
+        // val averageLoadTime = totalLoadTime / processedCount
+        // val averageScaleTime = totalScaleTime / processedCount
+        // val averageSaveTime = totalSaveTime / processedCount
+        // println("Processed Images: $processedCount")
+        // println("Total Processing Time: ${totalProcessingTime.formatDuration()}")
+        // println("Total Loading Time:    ${totalLoadTime.formatDuration()}")
+        // println("Total Scaling Time:    ${totalScaleTime.formatDuration()}")
+        // println("Total Saving Time:     ${totalSaveTime.formatDuration()}")
+        // println("Average Processing Time: ${averageProcessingTime.formatDuration()}")
+        // println("Average Loading Time:    ${averageLoadTime.formatDuration()}")
+        // println("Average Scaling Time:    ${averageScaleTime.formatDuration()}")
+        // println("Average Saving Time:     ${averageSaveTime.formatDuration()}")
+    }
 
-        println("Processed Images: $processedCount")
-        println("Total Processing Time: ${totalProcessingTime.formatDuration()}")
-        println("Total Loading Time:    ${totalLoadTime.formatDuration()}")
-        println("Total Scaling Time:    ${totalScaleTime.formatDuration()}")
-        println("Total Saving Time:     ${totalSaveTime.formatDuration()}")
-        println("Average Processing Time: ${averageProcessingTime.formatDuration()}")
-        println("Average Loading Time:    ${averageLoadTime.formatDuration()}")
-        println("Average Scaling Time:    ${averageScaleTime.formatDuration()}")
-        println("Average Saving Time:     ${averageSaveTime.formatDuration()}")
-
+    private fun dispatchProgress(
+        progressData: ProgressData,
+        currentIndex: Int,
+    ) {
+        runBlocking {
+            progressListener.onProgress(
+                progressData.copy(
+                    currentIndex = currentIndex
+                )
+            )
+        }
     }
 
     /**
