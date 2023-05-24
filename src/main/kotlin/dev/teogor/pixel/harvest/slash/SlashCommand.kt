@@ -1,6 +1,5 @@
 package dev.teogor.pixel.harvest.slash
 
-import dev.kord.common.Color
 import dev.kord.core.behavior.interaction.response.DeferredEphemeralMessageInteractionResponseBehavior
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
@@ -15,6 +14,7 @@ import dev.teogor.pixel.harvest.message.getBasePathForImages
 import dev.teogor.pixel.harvest.svg.ProgressData
 import dev.teogor.pixel.harvest.svg.ProgressListener
 import dev.teogor.pixel.harvest.svg.SvgConverter
+import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
 import dev.teogor.pixel.harvest.utils.Colors
 import dev.teogor.pixel.harvest.utils.asBooleanOrDefault
 import dev.teogor.pixel.harvest.utils.asStringOrDefault
@@ -87,7 +87,7 @@ sealed class SlashCommand {
         ) {
             super.action(interaction, response)
 
-            val message = kord.rest.interaction.createFollowupMessage(
+            var message = kord.rest.interaction.createFollowupMessage(
                 applicationId = interaction.applicationId,
                 interactionToken = response.token,
                 ephemeral = true
@@ -111,14 +111,18 @@ sealed class SlashCommand {
             val inputFolder = File(rootPath)
             val outputFolder = File("${rootPath}\\converter")
 
+            val progressData = ProgressData(
+                totalDownloadedImages = 10,
+                currentScaledImages = 0,
+                currentSvgConverted = 0
+            )
+
             // Create a progress listener or callback
             val progressListener = object : ProgressListener() {
                 override suspend fun onProgress(progressData: ProgressData) {
                     // Update the progress of scaled images
-                    val progressMessage =
-                        "Scaling images: ${(progressData.currentScaledImages)}/${progressData.totalDownloadedImages} complete"
-                    println("progressMessage=$progressData")
-                    kord.rest.interaction.modifyFollowupMessage(
+                    val progressMessage = "Images to be processed: ${progressData.totalDownloadedImages}"
+                    message = kord.rest.interaction.modifyFollowupMessage(
                         applicationId = interaction.applicationId,
                         interactionToken = response.token,
                         messageId = message.id,
@@ -128,22 +132,16 @@ sealed class SlashCommand {
                 }
             }
 
-            // val progressData = ProgressData(
-            //     totalDownloadedImages = 0,
-            //     currentScaledImages = 0,
-            //     currentSvgConverted = 0
-            // )
-            // progressListener.onProgress(
-            //     progressData.copy(
-            //         totalDownloadedImages = inputFolder.countFiles("")
-            //     )
-            // )
+            progressListener.onProgress(
+                progressData.copy(
+                    totalDownloadedImages = inputFolder.countFiles("")
+                )
+            )
 
             SvgConverter.Builder(inputFolder, outputFolder)
                 .withSvgGenerator(true)
                 .withSvgRasterizer(true)
                 .withBatchNumber(Random(System.currentTimeMillis()).nextInt(100000000, 999999999))
-                .withProgressListener(progressListener) // Set the progress listener
                 .build()
 
         }
