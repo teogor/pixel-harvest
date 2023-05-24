@@ -1,7 +1,7 @@
 package dev.teogor.pixel.harvest.slash
 
 import dev.teogor.pixel.harvest.BotManager.client
-import dev.teogor.pixel.harvest.DatabaseManager.getTotalDownloadCountByDiscordUser
+import dev.teogor.pixel.harvest.database.DatabaseManager.getTotalDownloadCountByDiscordUser
 import dev.teogor.pixel.harvest.discord.PathUtils.getBasePathForImages
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 import discord4j.core.`object`.command.ApplicationCommandOption

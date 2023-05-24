@@ -1,6 +1,6 @@
 package dev.teogor.pixel.harvest.message
 
-import dev.teogor.pixel.harvest.DatabaseManager
+import dev.teogor.pixel.harvest.database.DatabaseManager.addUser
 import dev.teogor.pixel.harvest.DiscordModule
 import dev.teogor.pixel.harvest.discord.deleteMessageAfterDelay
 import dev.teogor.pixel.harvest.models.Bot
@@ -34,7 +34,7 @@ class MessageDiscordModule(
         val message = event.message
         val authorId = message.author.orElse(null)?.id?.asLong() ?: return
         val author = message.author
-        DatabaseManager.addUser(
+        addUser(
             discordId = authorId,
             username = author.get().username,
         )

@@ -1,7 +1,5 @@
 package dev.teogor.pixel.harvest
 
-import dev.teogor.pixel.harvest.database.DatabaseHandler
-import dev.teogor.pixel.harvest.discord.PathUtils.getBasePathForImages
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.message.MessageDiscordModule
 import dev.teogor.pixel.harvest.slash.CommandDiscordModule
@@ -10,31 +8,6 @@ import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
 import java.io.File
 
-object DatabaseManager {
-    private val databaseHandler: DatabaseHandler = DatabaseHandler("src/main/resources/pixel-harvest.db").apply {
-        initializeDatabase()
-    }
-
-    fun addUser(discordId: Long, username: String) {
-        databaseHandler.addUser(
-            discordId = discordId,
-            username = username
-        )
-    }
-
-    fun addDownload(discordId: Long, url: String) {
-        databaseHandler.addDownload(
-            discordId = discordId,
-            url = url
-        )
-    }
-
-    fun getTotalDownloadCountByDiscordUser(discordId: Long): Long {
-        return databaseHandler.getTotalDownloadCountByDiscordUser(
-            discordId = discordId,
-        )
-    }
-}
 
 object BotManager {
     lateinit var client: DiscordClient
@@ -74,7 +47,7 @@ class PixelHarvestBot(token: String) {
         SvgConverter.Builder(inputFolder, outputFolder)
             .withSvgGenerator(true)
             .withSvgRasterizer(true)
-            .withBatchNumber(1)
+            .withBatchNumber(3)
             .build()
 
         keepBotAlive()
