@@ -36,7 +36,7 @@ object ContentTrimmerTest : Test() {
         name: String,
     ): Int {
         return this.listFiles { file ->
-            file.nameWithoutExtension.startsWith(name)
+            file.nameWithoutExtension.startsWith(name) && file.isFile
         }?.size ?: 0
     }
 
