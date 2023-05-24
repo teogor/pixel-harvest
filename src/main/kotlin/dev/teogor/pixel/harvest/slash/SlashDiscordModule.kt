@@ -16,6 +16,8 @@ class SlashDiscordModule : DiscordModule() {
         ReadyEvent::class.java,
     )
 
+    private val deleteSlashCommands = false
+
     override fun subscribe(event: Event) {
         when (event) {
             is ReadyEvent -> registerSlashCommands(event)
@@ -30,6 +32,10 @@ class SlashDiscordModule : DiscordModule() {
     private fun registerSlashCommands(event: ReadyEvent) {
         event.apply {
             this.guilds.map { guild ->
+                if (deleteSlashCommands) {
+                    deleteRegisteredCommands(guild.id)
+                }
+
                 SlashCommand.forEachCommand { command ->
                     runBlocking {
                         guild.kord.createGuildChatInputCommand(
@@ -41,6 +47,14 @@ class SlashDiscordModule : DiscordModule() {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private fun deleteRegisteredCommands(guildId: Snowflake) {
+        runBlocking {
+            kord.getGuildApplicationCommands(guildId).collect {
+                it.delete()
             }
         }
     }
