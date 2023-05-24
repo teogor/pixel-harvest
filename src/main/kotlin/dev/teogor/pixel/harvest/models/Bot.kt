@@ -15,6 +15,14 @@ sealed class Bot {
     abstract val name: String
 
     /**
+     * Represents the Pixel Harvest bot.
+     */
+    object PixelHarvestBot : Bot() {
+        override val id: Long = 1110114222442033172
+        override val name: String = "Pixel Harvest"
+    }
+
+    /**
      * Represents the Midjourney bot.
      */
     object MidJourneyBot : Bot() {
@@ -32,6 +40,7 @@ sealed class Bot {
 
     companion object {
         private val botIds: List<Bot> = listOf(
+            PixelHarvestBot,
             MidJourneyBot,
             NijiBot,
         )

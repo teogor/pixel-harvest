@@ -1,6 +1,7 @@
 package dev.teogor.pixel.harvest.message
 
 import dev.kord.core.entity.Message
+import dev.kord.core.entity.User
 import dev.kord.core.event.Event
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.event.message.ReactionAddEvent
@@ -22,7 +23,7 @@ class MessageDiscordModule : DiscordModule() {
         // Implement your event handling logic here
         when (event) {
             is MessageCreateEvent -> onMessageReceived(event)
-            is ReactionAddEvent -> deleteMessage(event)
+            is ReactionAddEvent -> reactionHandler(event)
         }
     }
 
@@ -36,22 +37,40 @@ class MessageDiscordModule : DiscordModule() {
         )
         if (Bot.MidJourneyBot.isBotIdMatch(authorId)) {
             ImageDownloader.downloadImages(
-                event = event
+                message = event.message
             )
         } else if (Bot.NijiBot.isBotIdMatch(authorId)) {
             ImageDownloader.downloadImages(
-                event = event
+                message = event.message
             )
         } else if (Developer.TeogorDeveloper.isDeveloperIdMatch(authorId)) {
             message.deleteMessageAfterDelay(Duration.ofSeconds(10))
         }
     }
 
-    private fun deleteMessage(event: ReactionAddEvent) {
+    private fun reactionHandler(event: ReactionAddEvent) {
+        if (Bot.isKnownBot(event.userId.value.toLong()).first) {
+            return
+        }
+        var user: User
+        runBlocking {
+            user = event.getUser()
+        }
+        if (user.isBot) {
+            println(user)
+        }
+        
         val emoji = event.emoji
         if (emoji.name == "❌") {
             runBlocking {
                 event.message.delete(reason = "marked with ❌")
+            }
+        } else if (emoji.name == "📁") {
+            runBlocking {
+                val message = event.message.fetchMessage()
+                ImageDownloader.downloadImages(
+                    message = message
+                )
             }
         }
     }

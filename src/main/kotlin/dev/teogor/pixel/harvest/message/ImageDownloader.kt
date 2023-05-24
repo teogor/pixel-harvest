@@ -1,9 +1,10 @@
 package dev.teogor.pixel.harvest.message
 
 import dev.kord.core.Kord
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.channel.Channel
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
-import dev.kord.core.event.message.MessageCreateEvent
 import dev.teogor.pixel.harvest.BotManager
 import dev.teogor.pixel.harvest.database.DatabaseManager.addDownload
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
@@ -18,14 +19,14 @@ import java.net.URL
 
 object ImageDownloader {
     internal fun downloadImages(
-        event: MessageCreateEvent,
+        message: Message,
     ) {
-        val attachments = event.message.attachments
-        val message = event.message.content
-        val invokerId = event.message.data.mentions[0].value.toLong()
+        val attachments = message.attachments
+        val content = message.content
+        val invokerId = message.data.mentions[0].value.toLong()
 
         var matches = 0
-        val componentsOptional = event.message.data.components
+        val componentsOptional = message.data.components
         componentsOptional.value?.let {
             it.forEach { component ->
                 component.components.value?.forEach { element ->
@@ -43,7 +44,7 @@ object ImageDownloader {
             if (attachments.isNotEmpty()) {
                 val basePath = "${getDownloadsFolderPath()}/${
                     BotManager.kord.getBasePathForImages(
-                        event = event,
+                        message = message,
                         haveChannel = false
                     )
                 }"
@@ -54,7 +55,7 @@ object ImageDownloader {
                 for (attachment in attachments) {
                     val imageUrl = attachment.url
                     val extension = File(attachment.filename).extension
-                    val extractFileName = message.extractFilename
+                    val extractFileName = content.extractFilename
                     val index = rootDirectory.countFiles(extractFileName)
                     val fileName = if (index == 0) {
                         extractFileName
@@ -85,6 +86,10 @@ object ImageDownloader {
 
                     outputStream.close()
                     inputStream.close()
+
+                    runBlocking {
+                        message.addReaction(ReactionEmoji.Unicode("📁"))
+                    }
                 }
             }
         }
@@ -92,13 +97,13 @@ object ImageDownloader {
 }
 
 fun Kord.getBasePathForImages(
-    event: MessageCreateEvent,
+    message: Message,
     haveChannel: Boolean = true,
 ): String {
     var basePath: String
     runBlocking {
-        val guild = event.getGuildOrNull()?.data
-        val channelId = event.message.channelId
+        val guild = message.getGuildOrNull()?.data
+        val channelId = message.channelId
         val channel = getChannelOf<Channel>(channelId)
         val serverName = guild?.name?.replace(" ", "-") ?: "Unknown Server"
         val channelName = channel?.data?.name?.value?.replace(" ", "-") ?: "Unknown Channel"
