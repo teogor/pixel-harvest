@@ -5,6 +5,7 @@ import dev.kord.core.Kord
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.channel.Channel
+import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.teogor.pixel.harvest.BotManager
 import dev.teogor.pixel.harvest.database.DatabaseManager.addDownload
@@ -121,6 +122,16 @@ object ImageDownloader {
             }
         } else {
             // todo mention @author in a new thread so he does not forget about it
+            runBlocking {
+                val channel = BotManager.kord.getChannelOf<TextChannel>(MessageDiscordModule.ImagineChannel.id)
+                channel?.let {
+                    val messageLink = "https://discord.com/channels/${channel.guildId.value}/${message.channelId.value}/${message.id.value}"
+                    val user = BotManager.kord.getUser(Snowflake((message.author?.id?.value?.toLong() ?: 0L)))
+                    user?.let {
+                        channel.createMessage("Generated prompt via imagine at $messageLink\nprompt: ${message.content}\nauthor ${user.mention}")
+                    }
+                }
+            }
         }
     }
 }

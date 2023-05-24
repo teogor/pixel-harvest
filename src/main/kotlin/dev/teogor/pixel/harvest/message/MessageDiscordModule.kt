@@ -1,5 +1,6 @@
 package dev.teogor.pixel.harvest.message
 
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.User
@@ -29,8 +30,15 @@ class MessageDiscordModule : DiscordModule() {
         }
     }
 
+    object ImagineChannel {
+
+        val id = Snowflake(1111055839302787133)
+
+    }
+
     private fun onMessageReceived(event: MessageCreateEvent) {
         val message = event.message
+        println(message)
         val authorId = message.author?.id?.value?.toLong() ?: return
         val author = message.author!!
         addUser(
@@ -61,6 +69,7 @@ class MessageDiscordModule : DiscordModule() {
         if (user.isBot) {
             println(user)
         }
+        println(user)
 
         val emoji = event.emoji
 
