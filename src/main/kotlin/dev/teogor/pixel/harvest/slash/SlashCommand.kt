@@ -188,44 +188,52 @@ sealed class SlashCommand {
 
         override val description: String = "View information about your profile."
 
-        //     override val commandRequest: ApplicationCommandRequest
-        //         get() = ApplicationCommandRequest.builder()
-        //             .name(name)
-        //             .description("View information about your profile.")
-        //             .build()
-        //
-        //     override val action: (ChatInputInteractionEvent) -> Unit
-        //         get() = { event ->
-        //             val basePath = "Downloads/${2
-        //                 // client.getBasePathForImages(
-        //                 //     event = event,
-        //                 //     haveChannel = false
-        //                 // )
-        //             }".replace("\\", "/")
-        //
-        //             val author = event.interaction.user
-        //             val username = author.username
-        //
-        //             val downloadCount = getTotalDownloadCountByDiscordUser(author.id.asLong())
-        //
-        //             val builder = EmbedCreateSpec.builder()
-        //             builder.color(Color.BLACK)
-        //             builder.title("Your Info - $username")
-        //             builder.description(
-        //                 """
-        //                 **Lifetime Images Downloaded:** `$downloadCount`
-        //
-        //                 **Auto Download:**  `Active`
-        //                 **Channel Subdirectory:**  `Disabled`
-        //                 **Download Folder Root:**  `${basePath}`
-        //                 """.trimIndent()
-        //             )
-        //             val spec = InteractionApplicationCommandCallbackSpec.builder()
-        //                 .addEmbed(builder.build())
-        //                 .ephemeral(true)
-        //                 .build()
-        //             event.reply(spec).block()
-        //         }
+        override suspend fun action(
+            interaction: GuildChatInputCommandInteraction,
+            response: DeferredEphemeralMessageInteractionResponseBehavior
+        ) {
+            super.action(interaction, response)
+
+            val message = kord.rest.interaction.createFollowupMessage(
+                applicationId = interaction.applicationId,
+                interactionToken = response.token,
+                ephemeral = true
+            ) {
+                content = "Retrieving Data..."
+            }
+
+            val rootPath = "Downloads\\${
+                kord.getBasePathForImages(
+                    interaction = interaction,
+                    haveChannel = false
+                )
+            }"
+            println(rootPath)
+
+            val author = interaction.user
+            val username = author.username
+
+            val downloadCount = getTotalDownloadCountByDiscordUser(author.id.value.toLong())
+            kord.rest.interaction.modifyFollowupMessage(
+                applicationId = interaction.applicationId,
+                interactionToken = response.token,
+                messageId = message.id,
+            ) {
+                embeds = mutableListOf(
+                    EmbedBuilder().apply {
+                        title = "Your Info - $username"
+                        description = """
+                            **Lifetime Images Downloaded:** `$downloadCount`
+            
+                            **Auto Download:**  `Active`
+                            **Channel Subdirectory:**  `Disabled`
+                            **Download Folder Root:**  `${rootPath}`
+                        """.trimIndent()
+                        color = Colors.GREEN
+                    }
+                )
+            }
+        }
     }
 
     object SettingsSlashCommand : SlashCommand() {
