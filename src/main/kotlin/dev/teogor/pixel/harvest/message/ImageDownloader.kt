@@ -18,7 +18,29 @@ import java.io.FileOutputStream
 import java.net.URL
 
 object ImageDownloader {
-    internal fun downloadImages(
+    private val downloadQueue: MutableList<Message> = mutableListOf()
+    private var isDownloading: Boolean = false
+
+    fun addToQueue(message: Message) {
+        downloadQueue.add(message)
+
+        if (!isDownloading) {
+            startDownloading()
+        }
+    }
+
+    private fun startDownloading() {
+        isDownloading = true
+
+        while (downloadQueue.isNotEmpty()) {
+            val message = downloadQueue.removeAt(0)
+            downloadImages(message)
+        }
+
+        isDownloading = false
+    }
+
+    private fun downloadImages(
         message: Message,
     ) {
         val attachments = message.attachments

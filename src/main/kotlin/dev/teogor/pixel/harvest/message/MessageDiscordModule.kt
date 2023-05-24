@@ -36,11 +36,11 @@ class MessageDiscordModule : DiscordModule() {
             username = author.username,
         )
         if (Bot.MidJourneyBot.isBotIdMatch(authorId)) {
-            ImageDownloader.downloadImages(
+            ImageDownloader.addToQueue(
                 message = event.message
             )
         } else if (Bot.NijiBot.isBotIdMatch(authorId)) {
-            ImageDownloader.downloadImages(
+            ImageDownloader.addToQueue(
                 message = event.message
             )
         } else if (Developer.TeogorDeveloper.isDeveloperIdMatch(authorId)) {
@@ -59,7 +59,7 @@ class MessageDiscordModule : DiscordModule() {
         if (user.isBot) {
             println(user)
         }
-        
+
         val emoji = event.emoji
         if (emoji.name == "❌") {
             runBlocking {
@@ -68,7 +68,7 @@ class MessageDiscordModule : DiscordModule() {
         } else if (emoji.name == "📁") {
             runBlocking {
                 val message = event.message.fetchMessage()
-                ImageDownloader.downloadImages(
+                ImageDownloader.addToQueue(
                     message = message
                 )
             }
