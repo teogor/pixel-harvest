@@ -68,6 +68,7 @@ fun RasterizerResult.processResult(
         is RasterizerResult.Success -> {
             onSuccess(this)
         }
+
         is RasterizerResult.Error -> {
             onError(this)
         }

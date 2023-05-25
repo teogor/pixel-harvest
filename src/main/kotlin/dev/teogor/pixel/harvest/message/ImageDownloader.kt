@@ -20,7 +20,6 @@ import dev.teogor.pixel.harvest.utils.getParams
 import dev.teogor.pixel.harvest.utils.getRandomColor
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -138,7 +137,8 @@ object ImageDownloader {
                         val user = BotManager.kord.getUser(Snowflake(it.id.value))
                         user?.let {
                             val extractPromptName = content.extractPromptName
-                            val extractPromptArgs = content.getParams().formatParamsData(delimiter = " ").replace("*", "")
+                            val extractPromptArgs =
+                                content.getParams().formatParamsData(delimiter = " ").replace("*", "")
                             val textVariants = listOf(
                                 "Imagine prompt created with `\\imagine` - link to the message: $messageLink",
                                 "Generated prompt using `\\imagine` - message URL: $messageLink",

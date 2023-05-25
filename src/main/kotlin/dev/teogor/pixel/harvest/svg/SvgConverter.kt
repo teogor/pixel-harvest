@@ -7,7 +7,6 @@ import dev.teogor.pixel.harvest.svg.rasterizer.SvgRasterizer
 import dev.teogor.pixel.harvest.svg.rasterizer.processResult
 import dev.teogor.pixel.harvest.svg.utils.ImageExtension
 import dev.teogor.pixel.harvest.svg.utils.createDirectoryIfNotExists
-import dev.teogor.pixel.harvest.svg.utils.formatDuration
 import dev.teogor.pixel.harvest.svg.utils.generateFileNameTemplate
 import dev.teogor.pixel.harvest.svg.utils.generateRandomNumber
 import dev.teogor.pixel.harvest.svg.utils.getFormattedDate
@@ -20,7 +19,6 @@ import org.apache.hc.client5.http.fluent.Request
 import org.apache.hc.core5.http.ClassicHttpResponse
 import java.io.File
 import java.io.FileWriter
-import java.net.URI
 
 /**
  * The SvgConverter class provides functionality to convert SVG files and images.
