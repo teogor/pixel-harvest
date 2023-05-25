@@ -140,19 +140,35 @@ object ImageDownloader {
                             val extractPromptArgs = content.getParams()
                                 .formatParamsData(prefix = "--")
                                 .replace("*", "")
-                            val textVariants = listOf(
-                                "Imagine prompt created with `\\imagine` - link to the message: $messageLink",
-                                "Generated prompt using `\\imagine` - message URL: $messageLink",
-                                "New prompt generated via `\\imagine` - see it at $messageLink",
-                                "Prompt created with `\\imagine` - check it out: $messageLink",
-                                "Imagine-generated prompt with `\\imagine` - message link: $messageLink"
+                            val messageLinkVariants = listOf(
+                                "link to the message: $messageLink",
+                                "message URL: $messageLink",
+                                "see it at $messageLink",
+                                "check it out: $messageLink",
+                                "message link: $messageLink",
+                                "message can be found at $messageLink",
+                                "explore the message here: $messageLink",
+                                "discover the message at $messageLink",
+                                "take a look at the message: $messageLink",
+                                "access the message via $messageLink"
+                            )
+                            val titleVariants = listOf(
+                                "New Prompt Created with Imagine Command",
+                                "Generated Prompt using Imagine Command",
+                                "Imagine-Generated Prompt",
+                                "Prompt Created with Imagine Command",
+                                "Imagine Prompt Generated",
+                                "Fresh Prompt Generated via Imagine Command",
+                                "Imagine Command Unveils a Brand-New Prompt",
+                                "Imagine Command Creates a Spark",
                             )
                             BotManager.kord.rest.channel.createMessage(
                                 channelId = MessageDiscordModule.ImagineChannel.id,
                             ) {
                                 this.embed {
+                                    title = titleVariants.random()
                                     description = """
-                                                ${textVariants.random()}
+                                                ${messageLinkVariants.random()}
                                                 
                                                 **Prompt:** `${extractPromptName}`
                                                 **Params:** `${extractPromptArgs}`
