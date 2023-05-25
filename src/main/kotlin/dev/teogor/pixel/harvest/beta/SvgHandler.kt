@@ -5,7 +5,7 @@ import dev.teogor.pixel.harvest.svg.SvgConverter
 import java.io.File
 
 fun main() {
-    val baseDownloadPath = "PixelHarvest\\ZeoAI-Automation\\images\\processed\\set-000004\\svg"
+    val baseDownloadPath = "PixelHarvest\\ZeoAI-Automation\\images\\processed\\set-000006\\svg"
     val rootPath = "${PathUtils.getDownloadsFolderPath()}\\$baseDownloadPath"
     val inputFolder = File(rootPath)
     val outputFolder = File("${rootPath}\\processed")
@@ -13,6 +13,6 @@ fun main() {
         .withSvgGenerator(false)
         .withSvgRasterizer(true)
         .withIncludeDataset(false)
-        .withBatchNumber(4)
+        .withBatchNumber(6)
         .build()
 }
