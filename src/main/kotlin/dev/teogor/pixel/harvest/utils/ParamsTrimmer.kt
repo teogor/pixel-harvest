@@ -5,7 +5,9 @@ import dev.teogor.pixel.harvest.utils.ParamsData.Companion.formatParamsData
 fun main() {
     val input = "locking here::2 --upbeta --q 2 --s3 750, 245 --ar 19:6 --stylize 700 --no text ride --v 5.1"
     println(input.getParams())
-    println(input.getParams().formatParamsData(delimiter = " "))
+    println(input.getParams().formatParamsData(delimiter = " ", wrapKeys = true))
+    println(input.getParams().formatParamsData(delimiter = " ", wrapKeys = false))
+    println(input.getParams().formatParamsData(prefix = "--"))
 }
 
 data class ParamArg(
@@ -87,37 +89,57 @@ data class ParamsData(
             )
         }
 
-        fun ParamsData.formatParamsData(delimiter: String = "\n"): String {
+        fun ParamsData.formatParamsData(
+            delimiter: String = " ",
+            wrapKeys: Boolean = false,
+            prefix: String = ""
+        ): String {
             val formattedString = StringBuilder()
 
             with(formattedString) {
                 with(this@formatParamsData) {
                     if (upbeta.isFound) {
-                        append("**upbeta**").append(delimiter)
+                        append(formatKey("upbeta", wrapKeys, prefix)).append(delimiter)
                     }
                     if (quality.isFound) {
-                        append("**quality** ${quality.value}").append(delimiter)
+                        append(formatKeyWithValue("quality", quality.value, wrapKeys, prefix)).append(delimiter)
                     }
                     if (style.isFound) {
-                        append("**style** ${style.value}").append(delimiter)
+                        append(formatKeyWithValue("style", style.value, wrapKeys, prefix)).append(delimiter)
                     }
                     if (version.isFound) {
-                        append("**version** ${version.value}").append(delimiter)
+                        append(formatKeyWithValue("version", version.value, wrapKeys, prefix)).append(delimiter)
                     }
                     if (ar.isFound) {
-                        append("**ar** ${ar.value}").append(delimiter)
+                        append(formatKeyWithValue("ar", ar.value, wrapKeys, prefix)).append(delimiter)
                     }
                     if (stylize.isFound) {
-                        append("**stylize** ${stylize.value}").append(delimiter)
+                        append(formatKeyWithValue("stylize", stylize.value, wrapKeys, prefix)).append(delimiter)
                     }
                     if (no.isFound) {
-                        append("**no** ${no.value}").append(delimiter)
+                        append(formatKeyWithValue("no", no.value, wrapKeys, prefix)).append(delimiter)
                     }
                 }
             }
 
             return formattedString.toString()
         }
+
+        private fun formatKey(key: String, wrapKeys: Boolean, prefix: String): String {
+            val formattedKey = if (wrapKeys) {
+                "**$key**"
+            } else {
+                key
+            }
+            return "$prefix$formattedKey"
+        }
+
+        private fun formatKeyWithValue(key: String, value: String, wrapKeys: Boolean, prefix: String): String {
+            val formattedKey = formatKey(key, wrapKeys, prefix)
+            return "$formattedKey $value"
+        }
+
+
     }
 }
 

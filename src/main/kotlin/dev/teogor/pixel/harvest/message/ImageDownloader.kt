@@ -137,8 +137,9 @@ object ImageDownloader {
                         val user = BotManager.kord.getUser(Snowflake(it.id.value))
                         user?.let {
                             val extractPromptName = content.extractPromptName
-                            val extractPromptArgs =
-                                content.getParams().formatParamsData(delimiter = " ").replace("*", "")
+                            val extractPromptArgs = content.getParams()
+                                .formatParamsData(prefix = "--")
+                                .replace("*", "")
                             val textVariants = listOf(
                                 "Imagine prompt created with `\\imagine` - link to the message: $messageLink",
                                 "Generated prompt using `\\imagine` - message URL: $messageLink",
