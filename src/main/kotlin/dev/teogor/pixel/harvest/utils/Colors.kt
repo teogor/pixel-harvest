@@ -1,6 +1,7 @@
 package dev.teogor.pixel.harvest.utils
 
 import dev.kord.common.Color
+import kotlin.reflect.full.memberProperties
 
 object Colors {
     val AQUA = Color(0, 255, 255)
@@ -140,4 +141,11 @@ object Colors {
     val YELLOW_GREEN = Color(154, 205, 50)
     val YELLOW_ORANGE = Color(255, 174, 66)
     val ZINC = Color(136, 138, 133)
+}
+
+fun getRandomColor(): Color {
+    val properties = Colors::class.memberProperties
+    val randomProperty = properties.random()
+    val color = randomProperty.getter.call(Colors)
+    return color as Color
 }

@@ -6,6 +6,7 @@ import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.Channel
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
+import dev.kord.rest.builder.message.create.embed
 import dev.teogor.pixel.harvest.BotManager
 import dev.teogor.pixel.harvest.database.DatabaseManager.addDownload
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
@@ -13,7 +14,8 @@ import dev.teogor.pixel.harvest.models.Bot
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
 import dev.teogor.pixel.harvest.utils.Emoji
 import dev.teogor.pixel.harvest.utils.createDirectoryIfNotExists
-import dev.teogor.pixel.harvest.utils.extractFilename
+import dev.teogor.pixel.harvest.utils.extractPromptName
+import dev.teogor.pixel.harvest.utils.getRandomColor
 import kotlinx.coroutines.runBlocking
 import java.io.BufferedInputStream
 import java.io.File
@@ -85,7 +87,7 @@ object ImageDownloader {
                 for (attachment in attachments) {
                     val imageUrl = attachment.url
                     val extension = File(attachment.filename).extension
-                    val extractFileName = content.extractFilename
+                    val extractFileName = content.extractPromptName
                     val index = rootDirectory.countFiles(extractFileName)
                     val fileName = if (index == 0) {
                         extractFileName
@@ -131,8 +133,28 @@ object ImageDownloader {
                     message.mentionedUsers.collect {
                         val user = BotManager.kord.getUser(Snowflake(it.id.value))
                         user?.let {
-                            val extractFileName = content.extractFilename
-                            channel.createMessage("Generated prompt via imagine at $messageLink\nprompt: ${extractFileName}\nauthor ${user.mention}")
+                            val extractPromptName = content.extractPromptName
+                            val extractPromptArgs = content.extractPromptName
+                            val textVariants = listOf(
+                                "Imagine prompt created with `\\imagine` - link to the message: $messageLink",
+                                "Generated prompt using `\\imagine` - message URL: $messageLink",
+                                "New prompt generated via `\\imagine` - see it at $messageLink",
+                                "Prompt created with `\\imagine` - check it out: $messageLink",
+                                "Imagine-generated prompt with `\\imagine` - message link: $messageLink"
+                            )
+                            BotManager.kord.rest.channel.createMessage(
+                                channelId = MessageDiscordModule.ImagineChannel.id,
+                            ) {
+                                this.embed {
+                                    description = """
+                                                ${textVariants.random()}
+                                                **Prompt** `${extractPromptName}`
+                                                **Params** `${extractPromptArgs}`
+                                                **Author** ${user.mention} | **AI Generator** ${message.author?.mention ?: "Unknown"}
+                                            """.trimIndent()
+                                    color = getRandomColor()
+                                }
+                            }
                         }
                     }
                 }

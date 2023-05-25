@@ -19,7 +19,7 @@ fun String.createDirectoryIfNotExists(): File {
     }
 }
 
-val String.extractFilename: String
+val String.extractPromptName: String
     get() = this.extractText().replaceUnavailableSymbols().sanitizeFileName(8)
 
 fun String.extractText(): String {

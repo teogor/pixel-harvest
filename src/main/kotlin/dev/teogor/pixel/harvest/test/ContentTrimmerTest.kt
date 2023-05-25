@@ -1,6 +1,6 @@
 package dev.teogor.pixel.harvest.test
 
-import dev.teogor.pixel.harvest.utils.extractFilename
+import dev.teogor.pixel.harvest.utils.extractPromptName
 import java.io.File
 
 object ContentTrimmerTest : Test() {
@@ -22,7 +22,7 @@ object ContentTrimmerTest : Test() {
 
         contents.forEachIndexed { index, content ->
             println("Content ${index + 1}: $content")
-            val contentMsg = "${content.extractFilename} (${324.toString().padStart(4, '0')})"
+            val contentMsg = "${content.extractPromptName} (${324.toString().padStart(4, '0')})"
             println("Extracted Text ${index + 1} (L=${contentMsg.length}): ${contentMsg}")
             println()
         }
