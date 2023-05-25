@@ -1,9 +1,11 @@
 package dev.teogor.pixel.harvest.utils
 
+import dev.teogor.pixel.harvest.utils.ParamsData.Companion.formatParamsData
+
 fun main() {
     val input = "locking here::2 --upbeta --q 2 --s3 750, 245 --ar 19:6 --stylize 700 --no text ride --v 5.1"
     println(input.getParams())
-    println(formatParamsData(input.getParams()))
+    println(input.getParams().formatParamsData(delimiter = " "))
 }
 
 data class ParamArg(
@@ -84,39 +86,39 @@ data class ParamsData(
                 no = createParamArg("no", no)
             )
         }
-    }
-}
 
-fun formatParamsData(paramsData: ParamsData): String {
-    val formattedString = StringBuilder()
+        fun ParamsData.formatParamsData(delimiter: String = "\n"): String {
+            val formattedString = StringBuilder()
 
-    with(formattedString) {
-        with(paramsData) {
-            if (upbeta.isFound) {
-                append("**upbeta**\n")
+            with(formattedString) {
+                with(this@formatParamsData) {
+                    if (upbeta.isFound) {
+                        append("**upbeta**").append(delimiter)
+                    }
+                    if (quality.isFound) {
+                        append("**quality** ${quality.value}").append(delimiter)
+                    }
+                    if (style.isFound) {
+                        append("**style** ${style.value}").append(delimiter)
+                    }
+                    if (version.isFound) {
+                        append("**version** ${version.value}").append(delimiter)
+                    }
+                    if (ar.isFound) {
+                        append("**ar** ${ar.value}").append(delimiter)
+                    }
+                    if (stylize.isFound) {
+                        append("**stylize** ${stylize.value}").append(delimiter)
+                    }
+                    if (no.isFound) {
+                        append("**no** ${no.value}").append(delimiter)
+                    }
+                }
             }
-            if (quality.isFound) {
-                append("**quality** ${quality.value}\n")
-            }
-            if (style.isFound) {
-                append("**style** ${style.value}\n")
-            }
-            if (version.isFound) {
-                append("**version** ${version.value}\n")
-            }
-            if (ar.isFound) {
-                append("**ar** ${ar.value}\n")
-            }
-            if (stylize.isFound) {
-                append("**stylize** ${stylize.value}\n")
-            }
-            if (no.isFound) {
-                append("**no** ${no.value}\n")
-            }
+
+            return formattedString.toString()
         }
     }
-
-    return formattedString.toString()
 }
 
 fun String.getParams(): ParamsData {

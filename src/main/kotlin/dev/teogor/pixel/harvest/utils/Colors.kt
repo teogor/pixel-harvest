@@ -143,9 +143,28 @@ object Colors {
     val ZINC = Color(136, 138, 133)
 }
 
-fun getRandomColor(): Color {
+fun getRandomColor(
+    isRed: Boolean = true,
+    isGreen: Boolean = true,
+): Color {
     val properties = Colors::class.memberProperties
-    val randomProperty = properties.random()
-    val color = randomProperty.getter.call(Colors)
-    return color as Color
+
+    // Filter the color properties based on the isRed and isGreen parameters
+    val filteredProperties = properties.filter { property ->
+        val color = property.getter.call(Colors) as Color
+        if (isRed && isGreen) {
+            color.red >= 128 && color.green >= 128
+        } else if (isRed) {
+            color.red >= 128
+        } else if (isGreen) {
+            color.green >= 128
+        } else {
+            true
+        }
+    }
+
+    // Select a random color from the filtered properties
+    val randomProperty = filteredProperties.random()
+    val color = randomProperty.getter.call(Colors) as Color
+    return color
 }

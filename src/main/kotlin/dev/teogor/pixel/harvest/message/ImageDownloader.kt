@@ -8,17 +8,19 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.kord.rest.builder.message.create.embed
 import dev.teogor.pixel.harvest.BotManager
-import dev.teogor.pixel.harvest.utils.formatParamsData
-import dev.teogor.pixel.harvest.utils.getParams
 import dev.teogor.pixel.harvest.database.DatabaseManager.addDownload
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.models.Bot
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
 import dev.teogor.pixel.harvest.utils.Emoji
+import dev.teogor.pixel.harvest.utils.ParamsData.Companion.formatParamsData
 import dev.teogor.pixel.harvest.utils.createDirectoryIfNotExists
 import dev.teogor.pixel.harvest.utils.extractPromptName
+import dev.teogor.pixel.harvest.utils.getParams
 import dev.teogor.pixel.harvest.utils.getRandomColor
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -136,9 +138,7 @@ object ImageDownloader {
                         val user = BotManager.kord.getUser(Snowflake(it.id.value))
                         user?.let {
                             val extractPromptName = content.extractPromptName
-                            val extractPromptArgs = formatParamsData(
-                                content.getParams()
-                            )
+                            val extractPromptArgs = content.getParams().formatParamsData(delimiter = " ").replace("*", "")
                             val textVariants = listOf(
                                 "Imagine prompt created with `\\imagine` - link to the message: $messageLink",
                                 "Generated prompt using `\\imagine` - message URL: $messageLink",
@@ -152,11 +152,14 @@ object ImageDownloader {
                                 this.embed {
                                     description = """
                                                 ${textVariants.random()}
-                                                **Prompt** `${extractPromptName}`
-                                                **Params** `${extractPromptArgs}`
+                                                
+                                                **Prompt:** `${extractPromptName}`
+                                                **Params:** `${extractPromptArgs}`
+                                                
                                                 **Author** ${user.mention} | **AI Generator** ${message.author?.mention ?: "Unknown"}
                                             """.trimIndent()
                                     color = getRandomColor()
+                                    timestamp = Clock.System.now()
                                 }
                             }
                         }
