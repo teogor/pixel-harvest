@@ -83,7 +83,15 @@ class MessageDiscordModule : DiscordModule() {
             }
         } else if (emoji.name == "❌") {
             runBlocking {
-                event.message.delete(reason = "marked with ❌")
+                event.message.fetchMessageOrNull()?.let {
+                    it.author?.let {author ->
+                        val midjourneyBot = Bot.MidJourneyBot.isBotIdMatch(author.id.value.toLong())
+                        val nijiBot = Bot.NijiBot.isBotIdMatch(author.id.value.toLong())
+                        if (!midjourneyBot && !nijiBot) {
+                            it.delete(reason = "marked with ❌")
+                        }
+                    }
+                }
             }
         }
     }
