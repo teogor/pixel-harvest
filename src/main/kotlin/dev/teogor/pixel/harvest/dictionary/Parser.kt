@@ -78,7 +78,7 @@ fun generatePrompt() {
 // Usage example
 fun generateDictionary() {
 
-    val datasetName = "shape"
+    val datasetName = "art-style"
     val inputFilePath = "src/main/resources/dictionary/$datasetName.dict"
     val outputFilePath = "src/main/kotlin/dev/teogor/pixel/harvest/dictionary/generated"
     val items = parseTextFile(inputFilePath, outputFilePath, datasetName)
