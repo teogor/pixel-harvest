@@ -16,6 +16,7 @@ import dev.teogor.pixel.harvest.utils.Emoji
 import dev.teogor.pixel.harvest.utils.ParamsData.Companion.formatParamsData
 import dev.teogor.pixel.harvest.utils.createDirectoryIfNotExists
 import dev.teogor.pixel.harvest.utils.extractPromptName
+import dev.teogor.pixel.harvest.utils.extractText
 import dev.teogor.pixel.harvest.utils.getParams
 import dev.teogor.pixel.harvest.utils.getRandomColor
 import kotlinx.coroutines.runBlocking
@@ -136,7 +137,7 @@ object ImageDownloader {
                     message.mentionedUsers.collect {
                         val user = BotManager.kord.getUser(Snowflake(it.id.value))
                         user?.let {
-                            val extractPromptName = content.extractPromptName
+                            val extractPromptName = content.extractText()
                             val extractPromptArgs = content.getParams()
                                 .formatParamsData(prefix = "--")
                                 .replace("*", "")
