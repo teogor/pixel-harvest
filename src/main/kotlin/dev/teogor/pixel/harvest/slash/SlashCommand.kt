@@ -1,13 +1,17 @@
 package dev.teogor.pixel.harvest.slash
 
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.interaction.response.DeferredEphemeralMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
+import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
 import dev.kord.rest.builder.interaction.ChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.boolean
+import dev.kord.rest.builder.interaction.channel
 import dev.kord.rest.builder.interaction.string
 import dev.kord.rest.builder.message.EmbedBuilder
+import dev.kord.rest.json.request.BulkDeleteRequest
 import dev.teogor.pixel.harvest.BotManager.kord
 import dev.teogor.pixel.harvest.beta.ColorPairGenerator
 import dev.teogor.pixel.harvest.database.DatabaseManager.getTotalDownloadCountByDiscordUser
@@ -23,6 +27,7 @@ import dev.teogor.pixel.harvest.utils.Colors
 import dev.teogor.pixel.harvest.utils.asBooleanOrDefault
 import dev.teogor.pixel.harvest.utils.asStringDefault
 import dev.teogor.pixel.harvest.utils.asStringOrDefault
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
@@ -63,6 +68,51 @@ sealed class SlashCommand {
 
     open fun withOptions(chatInputCreateBuilder: ChatInputCreateBuilder) {
 
+    }
+
+    object ClearChannelSlashCommand : SlashCommand() {
+        override val name: String = "clear"
+
+        override val description: String = "Clear all messages from a channel"
+
+        override fun withOptions(chatInputCreateBuilder: ChatInputCreateBuilder) {
+            super.withOptions(chatInputCreateBuilder)
+
+            chatInputCreateBuilder.apply {
+                channel(name = "channel", description = "The target channel") {
+                    required = true
+                }
+            }
+        }
+
+        override suspend fun action(
+            interaction: GuildChatInputCommandInteraction,
+            response: DeferredEphemeralMessageInteractionResponseBehavior
+        ) {
+            super.action(interaction, response)
+
+            val command = interaction.command
+            val channelId = command.options["channel"].asStringDefault("")
+
+            if (channelId.isEmpty()) {
+                return
+            }
+
+            val message = kord.rest.interaction.createFollowupMessage(
+                applicationId = interaction.applicationId,
+                interactionToken = response.token,
+                ephemeral = true
+            ) {
+                content = "Greetings, $name!"
+            }
+            val channel = kord.getChannelOf<MessageChannel>(Snowflake(channelId.toLong()))
+            channel?.let {
+                val lastMessageId = it.lastMessageId ?: return@let
+                val messages = it.getMessagesBefore(lastMessageId).toList().map { message -> message.id }
+                val bulkDeleteRequest = BulkDeleteRequest(messages)
+                kord.rest.channel.bulkDelete(Snowflake(channelId.toLong()), bulkDeleteRequest)
+            }
+        }
     }
 
     object ColorPromptSlashCommand : SlashCommand() {
@@ -445,6 +495,7 @@ sealed class SlashCommand {
 
     companion object {
         private val commands: List<SlashCommand> = listOf(
+            ClearChannelSlashCommand,
             ColorPromptSlashCommand,
             GenerateSlashCommand,
             GreetSlashCommand,
