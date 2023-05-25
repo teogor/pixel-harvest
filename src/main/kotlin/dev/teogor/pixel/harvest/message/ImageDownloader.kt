@@ -8,6 +8,8 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.kord.rest.builder.message.create.embed
 import dev.teogor.pixel.harvest.BotManager
+import dev.teogor.pixel.harvest.utils.formatParamsData
+import dev.teogor.pixel.harvest.utils.getParams
 import dev.teogor.pixel.harvest.database.DatabaseManager.addDownload
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.models.Bot
@@ -134,7 +136,9 @@ object ImageDownloader {
                         val user = BotManager.kord.getUser(Snowflake(it.id.value))
                         user?.let {
                             val extractPromptName = content.extractPromptName
-                            val extractPromptArgs = content.extractPromptName
+                            val extractPromptArgs = formatParamsData(
+                                content.getParams()
+                            )
                             val textVariants = listOf(
                                 "Imagine prompt created with `\\imagine` - link to the message: $messageLink",
                                 "Generated prompt using `\\imagine` - message URL: $messageLink",
