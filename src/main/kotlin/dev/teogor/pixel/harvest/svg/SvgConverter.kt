@@ -190,6 +190,8 @@ class SvgConverter private constructor(
             currentIndex = currentFileIndex,
         )
         currentFileIndex++
+        // todo try to make multiple requests
+        // todo read the docs. it would be better if we can make around 4 requests at a time
         directoryInput.listFilesWithExtensions(imageExtensions) { imageFile ->
             val request = Request.post("https://vectorizer.ai/api/v1/vectorize")
                 .addHeader(

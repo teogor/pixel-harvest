@@ -45,7 +45,9 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
 const val generatePrompt = true
 fun main() {
     if (generatePrompt) {
-        generatePrompt()
+        repeat(5) {
+            generatePrompt()
+        }
     } else {
         generateDictionary()
     }
