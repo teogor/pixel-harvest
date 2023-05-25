@@ -1,7 +1,8 @@
 package dev.teogor.pixel.harvest.utils
 
 fun main() {
-    val input = "locking here::2 --upbeta --q 2 --s 750, 245 --ar 19:6 --stylize 700 --no text ride --v 5.1"
+    val input = "locking here::2 --upbeta --q 2 --s3 750, 245 --ar 19:6 --stylize 700 --no text ride --v 5.1"
+    println(input.getParams())
     println(formatParamsData(input.getParams()))
 }
 
@@ -51,6 +52,17 @@ data class ParamsData(
     ),
 ) {
     companion object {
+        private fun createParamArg(key: String, value: String?): ParamArg {
+            return if (value.isNullOrEmpty()) {
+                ParamArg.keyOnly(key)
+            } else {
+                ParamArg.keyValue(key).apply {
+                    isFound = true
+                    this.value = value
+                }
+            }
+        }
+
         fun generateFor(
             hasUpbeta: Boolean,
             quality: String?,
@@ -60,77 +72,17 @@ data class ParamsData(
             stylize: String?,
             no: String?
         ): ParamsData {
-            return ParamsData().apply {
-                if (hasUpbeta) {
-                    this.upbeta.apply {
-                        isFound = true
-                    }
-                } else {
-                    this.upbeta.apply {
-                        isFound = false
-                    }
-                }
-                if (quality.isNullOrEmpty()) {
-                    this.quality.apply {
-                        isFound = false
-                    }
-                } else {
-                    this.quality.apply {
-                        isFound = true
-                        value = quality
-                    }
-                }
-                if (style.isNullOrEmpty()) {
-                    this.style.apply {
-                        isFound = false
-                    }
-                } else {
-                    this.style.apply {
-                        isFound = true
-                        value = style
-                    }
-                }
-                if (version.isNullOrEmpty()) {
-                    this.version.apply {
-                        isFound = false
-                    }
-                } else {
-                    this.version.apply {
-                        isFound = true
-                        value = version
-                    }
-                }
-                if (ar.isNullOrEmpty()) {
-                    this.ar.apply {
-                        isFound = false
-                    }
-                } else {
-                    this.ar.apply {
-                        isFound = true
-                        value = ar
-                    }
-                }
-                if (stylize.isNullOrEmpty()) {
-                    this.stylize.apply {
-                        isFound = false
-                    }
-                } else {
-                    this.stylize.apply {
-                        isFound = true
-                        value = stylize
-                    }
-                }
-                if (no.isNullOrEmpty()) {
-                    this.no.apply {
-                        isFound = false
-                    }
-                } else {
-                    this.no.apply {
-                        isFound = true
-                        value = no
-                    }
-                }
-            }
+            return ParamsData(
+                upbeta = ParamArg.keyOnly("upbeta").apply {
+                    isFound = hasUpbeta
+                },
+                quality = createParamArg("quality", quality),
+                style = createParamArg("style", style),
+                version = createParamArg("version", version),
+                ar = createParamArg("ar", ar),
+                stylize = createParamArg("stylize", stylize),
+                no = createParamArg("no", no)
+            )
         }
     }
 }
