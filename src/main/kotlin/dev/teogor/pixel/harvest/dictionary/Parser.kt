@@ -13,17 +13,23 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
     val outputFile = File("${outputFilePath}/$className.kt")
     val sortedItems: SortedSet<String>
 
+    val categories = mutableMapOf<String, MutableSet<String>>()
+    var currentCategory = ""
+
+    inputFile.forEachLine { line ->
+        val trimmedLine = line.trim()
+        if (trimmedLine.startsWith("::category::")) {
+            currentCategory = trimmedLine.removePrefix("::category::")
+        } else if (trimmedLine.isNotBlank()) {
+            categories.getOrPut(currentCategory) { mutableSetOf() }.add(trimmedLine)
+        }
+    }
+
+    sortedItems = categories.values.flatten().toSortedSet()
+
     outputFile.bufferedWriter().use { writer ->
         writer.write("package dev.teogor.pixel.harvest.dictionary.generated\n\n")
         writer.write("import dev.teogor.pixel.harvest.dictionary.Dictionary\n\n")
-
-        val items = mutableListOf<String>()
-        inputFile.forEachLine { line ->
-            if (line.isNotBlank()) {
-                items.add(line)
-            }
-        }
-        sortedItems = items.toSortedSet()
 
         writer.write("private val list = setOf(\n")
         sortedItems.forEach { item ->
@@ -31,10 +37,25 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
         }
         writer.write(")\n\n")
 
+        categories.forEach { (category, itemList) ->
+            val categoryName = category.toCamelCase()
+            val categoryNameLower = categoryName.replaceFirstChar { it.lowercase() }
+
+            writer.write("private val ${categoryNameLower}Set = setOf(\n")
+            itemList.forEach { item ->
+                writer.write("    \"$item\",\n")
+            }
+            writer.write(")\n\n")
+        }
+
         writer.write("class $className(list: Set<String>) : Dictionary(list) {\n")
         writer.write("    class ${className}Builder : Builder()\n\n")
         writer.write("    enum class ${className}Types(private val ${nameLower}Set: Set<String>) : Type {\n")
-        writer.write("        ALL(list);\n\n")
+        categories.forEach { (category, _) ->
+            val categoryName = category.uppercase()
+            writer.write("        $categoryName(${category}Set),\n")
+        }
+        writer.write("        ALL(${categories.keys.joinToString("Set + ")}Set);\n\n")
         writer.write("        override fun getSet(): Set<String> {\n")
         writer.write("            return ${nameLower}Set\n")
         writer.write("        }\n")
@@ -47,12 +68,6 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
         writer.write("        }\n")
         writer.write("    }\n\n")
         writer.write("}\n")
-    }
-
-    inputFile.bufferedWriter().use { writer ->
-        sortedItems.forEach { item ->
-            writer.write("${item.lowercase()}\n")
-        }
     }
 
     return sortedItems
