@@ -51,7 +51,7 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
 
         writer.write("class $className(list: Set<String>) : Dictionary(list) {\n")
         writer.write("    class ${className}Builder : Builder()\n\n")
-        writer.write("    enum class ${className}Types(private val ${nameLower}Set: Set<String>) : Type {\n")
+        writer.write("    enum class ${name}Types(private val ${nameLower}Set: Set<String>) : Type {\n")
         if (hasCategories) {
             categories.forEach { (category, _) ->
                 val categoryName = category.uppercase()
@@ -99,15 +99,17 @@ fun generateUniqueElements(vararg dictionaryCounts: Pair<Dictionary, Int>): List
 }
 
 fun generatePrompt() {
-    val colorDict = ColorDictionary.builder {
-        addType(ColorDictionary.ColorTypes.FUNDAMENTAL)
-        addType(ColorDictionary.ColorTypes.NEUTRAL)
-    }
-    colorDict
     val uniqueElements = generateUniqueElements(
-        colorDict to 5,
-        ArtStyleDictionary() to 2,
-        ShapeDictionary() to 1,
+        ColorDictionary.builder {
+            addType(ColorDictionary.ColorTypes.FUNDAMENTAL)
+            addType(ColorDictionary.ColorTypes.NEUTRAL)
+        } to 5,
+        ArtStyleDictionary.builder {
+            addType(ArtStyleDictionary.ArtStyleTypes.ALL)
+        } to 2,
+        ShapeDictionary.builder {
+            addType(ShapeDictionary.ShapeTypes.ALL)
+        } to 1,
         SportsDictionary() to 1,
         CameraAngleDictionary() to 1
     )
@@ -120,7 +122,7 @@ fun generatePrompt() {
 // Usage example
 fun generateDictionary() {
 
-    val datasetName = "art-style-beta"
+    val datasetName = "sport"
     val inputFilePath = "src/main/resources/dictionary/$datasetName.dict"
     val outputFilePath = "src/main/kotlin/dev/teogor/pixel/harvest/dictionary/generated"
     val items = parseTextFile(inputFilePath, outputFilePath, datasetName)

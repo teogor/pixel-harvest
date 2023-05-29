@@ -38,6 +38,8 @@ dependencies {
     implementation("dev.kord:kord-rest:0.9.0")
     implementation("dev.kord:kord-gateway:0.9.0")
 
+    implementation("com.squareup:kotlinpoet:1.13.2")
+
     // logging
     implementation("org.slf4j:slf4j-api:2.0.7")
     implementation("ch.qos.logback:logback-classic:1.4.7")

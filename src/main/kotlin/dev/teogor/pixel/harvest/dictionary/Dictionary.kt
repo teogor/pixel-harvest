@@ -27,9 +27,9 @@ open class Dictionary internal constructor(
     open val listLegacy: Set<String> = emptySet()
 
     fun getRandomUniqueItems(count: Int): List<String> {
-        require(count <= listLegacy.size) { "Requested count exceeds the available unique items." }
+        // require(count <= listLegacy.size) { "Requested count exceeds the available unique items." }
 
-        return listLegacy.shuffled().distinct().take(count)
+        return list.shuffled().distinct().take(count)
     }
 
     open fun getEntry(item: String): String? {
