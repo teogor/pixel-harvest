@@ -1,7 +1,7 @@
 package dev.teogor.pixel.harvest.dictionary
 
 open class Dictionary internal constructor(
-    open val list: Set<String>
+    open val list: Set<String> = emptySet()
 ) {
     open class Builder {
         private val setType = mutableSetOf<Type>()
