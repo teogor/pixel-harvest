@@ -4,16 +4,23 @@ open class Dictionary internal constructor(
     open val list: Set<String>
 ) {
     open class Builder {
-        private val setBuilder = mutableSetOf<String>()
+        private val setType = mutableSetOf<Type>()
 
-        fun addSet(set: Set<String>): Builder {
-            setBuilder.addAll(set)
+        fun addType(colorType: Type): Builder {
+            setType.add(colorType)
             return this
         }
 
         open fun build(): Dictionary {
-            return Dictionary(setBuilder.toSet())
+            val includedSets = setType.map { it.getSet() }
+            val mergedSet = includedSets.flatten().toSet()
+            return Dictionary(mergedSet)
         }
+    }
+
+
+    interface Type {
+        fun getSet(): Set<String>
     }
 
     @Deprecated(message = "to be removed once the builder is completed")
@@ -27,9 +34,5 @@ open class Dictionary internal constructor(
 
     open fun getEntry(item: String): String? {
         return listLegacy.find { it.equals(item, ignoreCase = true) }
-    }
-
-    open fun getList(vararg lists: Set<String>): Set<String> {
-        return lists.toList().flatten().toSet()
     }
 }
