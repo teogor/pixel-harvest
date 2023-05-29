@@ -1,13 +1,53 @@
-abstract
-baroque
-cubist
-flat
-futuristic
-geometric
-graffiti
-illustration
-minimalistic
-monochrome
-pastel
-vector
-watercolor
+
+::category::abstract
+abstract expressionism
+abstract impressionism
+abstract surrealism
+
+::category::baroque
+baroque revival
+late baroque
+
+::category::cubist
+analytical cubism
+synthetic cubism
+
+::category::futuristic
+cyberpunk
+steampunk
+
+::category::geometric
+constructivism
+op art
+
+::category::graffiti
+street art
+stencil graffiti
+
+::category::illustration
+digital illustration
+fantasy illustration
+
+::category::minimalistic
+minimalism
+minimalist sculpture
+
+::category::monochrome
+black and white photography
+monochromatic painting
+
+::category::pastel
+pastel painting
+soft pastel drawing
+
+::category::realism
+hyperrealism
+photorealism
+
+::category::vector
+vector art
+vector illustration
+
+::category::watercolor
+landscape watercolor
+portrait watercolor
