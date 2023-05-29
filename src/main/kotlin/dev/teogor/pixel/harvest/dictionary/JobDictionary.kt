@@ -1,7 +1,7 @@
 package dev.teogor.pixel.harvest.dictionary
 
 class JobDictionary : Dictionary() {
-    override val list: Set<String> = setOf(
+    override val listLegacy: Set<String> = setOf(
         "Accountant",
         "Actor",
         "Architect",

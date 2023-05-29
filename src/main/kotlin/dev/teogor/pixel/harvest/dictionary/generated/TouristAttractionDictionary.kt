@@ -3,7 +3,7 @@ package dev.teogor.pixel.harvest.dictionary.generated
 import dev.teogor.pixel.harvest.dictionary.Dictionary
 
 class TouristAttractionDictionary : Dictionary() {
-    override val list: Set<String> = setOf(
+    override val listLegacy: Set<String> = setOf(
         "acropolis of athens - athens, greece",
         "aker brygge - oslo, norway",
         "akihabara - tokyo, japan",

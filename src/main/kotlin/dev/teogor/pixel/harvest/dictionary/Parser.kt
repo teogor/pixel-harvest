@@ -65,6 +65,10 @@ fun generateUniqueElements(vararg dictionaryCounts: Pair<Dictionary, Int>): List
 }
 
 fun generatePrompt() {
+    val colorDict = ColorDictionary.builder {
+        addSet(FUNDAMENTALS)
+        addSet(NEUTRALS)
+    }
     val uniqueElements = generateUniqueElements(
         ArtStyleDictionary() to 2,
         ShapeDictionary() to 1,

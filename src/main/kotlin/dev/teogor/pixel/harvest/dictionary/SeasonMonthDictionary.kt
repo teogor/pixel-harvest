@@ -1,7 +1,7 @@
 package dev.teogor.pixel.harvest.dictionary
 
 class SeasonMonthDictionary : Dictionary() {
-    override val list: Set<String> = setOf(
+    override val listLegacy: Set<String> = setOf(
         "Spring",
         "Summer",
         "Autumn",

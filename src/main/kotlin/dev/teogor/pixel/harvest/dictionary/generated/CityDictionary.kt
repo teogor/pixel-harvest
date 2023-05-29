@@ -3,7 +3,7 @@ package dev.teogor.pixel.harvest.dictionary.generated
 import dev.teogor.pixel.harvest.dictionary.Dictionary
 
 class CityDictionary : Dictionary() {
-    override val list: Set<String> = setOf(
+    override val listLegacy: Set<String> = setOf(
         "Abu Ghraib, Iraq",
         "Abuja, Nigeria",
         "Accra, Ghana",

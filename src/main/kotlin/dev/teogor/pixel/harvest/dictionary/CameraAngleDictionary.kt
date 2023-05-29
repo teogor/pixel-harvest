@@ -1,7 +1,7 @@
 package dev.teogor.pixel.harvest.dictionary
 
 class CameraAngleDictionary : Dictionary() {
-    override val list: Set<String> = setOf(
+    override val listLegacy: Set<String> = setOf(
         "Bird's Eye View",
         "Aerial View",
         "High Angle",

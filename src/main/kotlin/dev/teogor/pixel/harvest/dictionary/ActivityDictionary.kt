@@ -1,7 +1,7 @@
 package dev.teogor.pixel.harvest.dictionary
 
 class ActivityDictionary : Dictionary() {
-    override val list: Set<String> = setOf(
+    override val listLegacy: Set<String> = setOf(
         "Hiking",
         "Cycling",
         "Running",

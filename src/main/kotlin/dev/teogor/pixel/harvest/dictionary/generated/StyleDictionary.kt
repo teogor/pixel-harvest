@@ -3,7 +3,7 @@ package dev.teogor.pixel.harvest.dictionary.generated
 import dev.teogor.pixel.harvest.dictionary.Dictionary
 
 class StyleDictionary : Dictionary() {
-    override val list: Set<String> = setOf(
+    override val listLegacy: Set<String> = setOf(
         "art deco",
         "artistic",
         "avant-garde",

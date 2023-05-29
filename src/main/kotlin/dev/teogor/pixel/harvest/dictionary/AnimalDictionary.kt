@@ -1,7 +1,7 @@
 package dev.teogor.pixel.harvest.dictionary
 
 class AnimalDictionary : Dictionary() {
-    override val list: Set<String> = setOf(
+    override val listLegacy: Set<String> = setOf(
         "Dog",
         "Cat",
         "Elephant",
