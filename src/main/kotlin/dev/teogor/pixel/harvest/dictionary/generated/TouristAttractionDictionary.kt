@@ -2,7 +2,7 @@ package dev.teogor.pixel.harvest.dictionary.generated
 
 import dev.teogor.pixel.harvest.dictionary.Dictionary
 
-private val list = setOf(
+private val attractionsSet = setOf(
     "acropolis of athens - athens, greece",
     "aker brygge - oslo, norway",
     "akihabara - tokyo, japan",
@@ -294,12 +294,14 @@ class TouristAttractionDictionary(list: Set<String>) : Dictionary(list) {
     class TouristAttractionDictionaryBuilder : Builder()
 
     enum class TouristAttractionTypes(private val touristAttractionSet: Set<String>) : Type {
-        ALL(list);
+        ATTRACTIONS(attractionsSet),
+        ALL(attractionsSet);
 
         override fun getSet(): Set<String> {
             return touristAttractionSet
         }
     }
+
     companion object {
         fun builder(block: TouristAttractionDictionaryBuilder.() -> Unit): TouristAttractionDictionary {
             val builder = TouristAttractionDictionaryBuilder()

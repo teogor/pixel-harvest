@@ -112,7 +112,6 @@ private val melonsSet = setOf(
 private val pomeFruitsSet = setOf(
     "apple",
     "pear",
-    "quince",
     "crabapple",
     "medlar",
     "chayote",
@@ -134,7 +133,6 @@ private val exoticFruitsSet = setOf(
     "pepino melon",
     "atemoya",
     "mangaba",
-    "feijoa",
     "guaje",
     "pulasan",
     "abiu",

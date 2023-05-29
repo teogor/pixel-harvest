@@ -1,20 +1,24 @@
 package dev.teogor.pixel.harvest.dictionary
 
 import dev.teogor.pixel.harvest.dictionary.generated.ArtStyleDictionary
+import dev.teogor.pixel.harvest.dictionary.generated.CameraAngleDictionary
+import dev.teogor.pixel.harvest.dictionary.generated.ColorDictionary
 import dev.teogor.pixel.harvest.dictionary.generated.ShapeDictionary
+import dev.teogor.pixel.harvest.dictionary.generated.SportDictionary
+import dev.teogor.pixel.harvest.svg.utils.listFilesWithExtensions
 import java.io.File
 import java.util.Locale
 import java.util.SortedSet
 
-fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: String): SortedSet<String> {
+fun parseTextFile(inputFile: File, outputFilePath: String, datasetName: String): SortedSet<String> {
     val name = datasetName.toCamelCase()
     val nameLower = name.replaceFirstChar { it.lowercase() }
     val className = "${name}Dictionary"
-    val inputFile = File(inputFilePath)
     val outputFile = File("${outputFilePath}/$className.kt")
     val sortedItems: SortedSet<String>
 
     val categories = mutableMapOf<String, MutableSet<String>>()
+    val addedElements = mutableSetOf<String>()
     var currentCategory = ""
     var hasCategories = false // Track if any categories were found
 
@@ -24,7 +28,11 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
             currentCategory = trimmedLine.removePrefix("::category::")
             hasCategories = true
         } else if (trimmedLine.isNotBlank()) {
-            categories.getOrPut(currentCategory) { mutableSetOf() }.add(trimmedLine.lowercase())
+            val element = trimmedLine.lowercase()
+            if (!addedElements.contains(element)) {
+                categories.getOrPut(currentCategory) { mutableSetOf() }.add(element)
+                addedElements.add(element)
+            }
         }
     }
 
@@ -146,8 +154,8 @@ fun generateUniqueElements(vararg dictionaryCounts: Pair<Dictionary, Int>): List
 fun generatePrompt() {
     val uniqueElements = generateUniqueElements(
         ColorDictionary.builder {
-            addType(ColorDictionary.ColorTypes.FUNDAMENTAL)
-            addType(ColorDictionary.ColorTypes.NEUTRAL)
+            addType(ColorDictionary.ColorTypes.FUNDAMENTAL_COLORS)
+            addType(ColorDictionary.ColorTypes.NEUTRAL_COLORS)
         } to 5,
         ArtStyleDictionary.builder {
             addType(ArtStyleDictionary.ArtStyleTypes.ALL)
@@ -155,8 +163,12 @@ fun generatePrompt() {
         ShapeDictionary.builder {
             addType(ShapeDictionary.ShapeTypes.ALL)
         } to 1,
-        SportsDictionary() to 1,
-        CameraAngleDictionary() to 1
+        SportDictionary.builder {
+            addType(SportDictionary.SportTypes.ALL)
+        } to 1,
+        CameraAngleDictionary.builder {
+            addType(CameraAngleDictionary.CameraAngleTypes.ALL)
+        } to 1
     )
 
     // Print the generated unique elements
@@ -166,13 +178,12 @@ fun generatePrompt() {
 
 // Usage example
 fun generateDictionary() {
-
-    val datasetName = "sport"
-    val inputFilePath = "src/main/resources/dictionary/$datasetName.dict"
+    val directoryPath = "src/main/resources/dictionary/"
+    val directory = File(directoryPath)
     val outputFilePath = "src/main/kotlin/dev/teogor/pixel/harvest/dictionary/generated"
-    val items = parseTextFile(inputFilePath, outputFilePath, datasetName)
-    // println("Generated file for ${items.size} Unique Entries")
-
+    directory.listFilesWithExtensions(listOf("dict")) {
+        parseTextFile(it, outputFilePath, it.nameWithoutExtension)
+    }
 }
 
 fun String.toCamelCase(): String {

@@ -2,7 +2,7 @@ package dev.teogor.pixel.harvest.dictionary.generated
 
 import dev.teogor.pixel.harvest.dictionary.Dictionary
 
-private val list = setOf(
+private val shapesSet = setOf(
     "abstract form shape",
     "circle shape",
     "curve shape",
@@ -29,12 +29,14 @@ class ShapeDictionary(list: Set<String>) : Dictionary(list) {
     class ShapeDictionaryBuilder : Builder()
 
     enum class ShapeTypes(private val shapeSet: Set<String>) : Type {
-        ALL(list);
+        SHAPES(shapesSet),
+        ALL(shapesSet);
 
         override fun getSet(): Set<String> {
             return shapeSet
         }
     }
+
     companion object {
         fun builder(block: ShapeDictionaryBuilder.() -> Unit): ShapeDictionary {
             val builder = ShapeDictionaryBuilder()
