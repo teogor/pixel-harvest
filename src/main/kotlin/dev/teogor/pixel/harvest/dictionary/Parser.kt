@@ -6,7 +6,9 @@ import java.io.File
 import java.util.SortedSet
 
 fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: String): SortedSet<String> {
-    val className = "${datasetName.toCamelCase()}Dictionary"
+    val name = datasetName.toCamelCase()
+    val nameLower = name.replaceFirstChar { it.lowercase() }
+    val className = "${name}Dictionary"
     val inputFile = File(inputFilePath)
     val outputFile = File("${outputFilePath}/$className.kt")
     val sortedItems: SortedSet<String>
@@ -14,8 +16,6 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
     outputFile.bufferedWriter().use { writer ->
         writer.write("package dev.teogor.pixel.harvest.dictionary.generated\n\n")
         writer.write("import dev.teogor.pixel.harvest.dictionary.Dictionary\n\n")
-        writer.write("class $className : Dictionary() {\n")
-        writer.write("    override val list: Set<String> = setOf(\n")
 
         val items = mutableListOf<String>()
         inputFile.forEachLine { line ->
@@ -24,14 +24,30 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
             }
         }
         sortedItems = items.toSortedSet()
-        sortedItems.forEach { item ->
-            writer.write("        \"$item\",\n")
-        }
 
-        writer.write("    )\n")
+        writer.write("private val list = setOf(\n")
+        sortedItems.forEach { item ->
+            writer.write("    \"$item\",\n")
+        }
+        writer.write(")\n\n")
+
+        writer.write("class $className(list: Set<String>) : Dictionary(list) {\n")
+        writer.write("    class ${className}Builder : Builder()\n\n")
+        writer.write("    enum class ${className}Types(private val ${nameLower}Set: Set<String>) : Type {\n")
+        writer.write("        ALL(list);\n\n")
+        writer.write("        override fun getSet(): Set<String> {\n")
+        writer.write("            return ${nameLower}Set\n")
+        writer.write("        }\n")
+        writer.write("    }\n")
+        writer.write("    companion object {\n")
+        writer.write("        fun builder(block: ${className}Builder.() -> Unit): $className {\n")
+        writer.write("            val builder = ${className}Builder()\n")
+        writer.write("            builder.block()\n")
+        writer.write("            return $className(builder.build().list)\n")
+        writer.write("        }\n")
+        writer.write("    }\n\n")
         writer.write("}\n")
     }
-
 
     inputFile.bufferedWriter().use { writer ->
         sortedItems.forEach { item ->
@@ -42,7 +58,7 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
     return sortedItems
 }
 
-const val generatePrompt = true
+const val generatePrompt = false
 fun main() {
     if (generatePrompt) {
         repeat(5) {
@@ -86,7 +102,7 @@ fun generatePrompt() {
 // Usage example
 fun generateDictionary() {
 
-    val datasetName = "art-style"
+    val datasetName = "art-style-beta"
     val inputFilePath = "src/main/resources/dictionary/$datasetName.dict"
     val outputFilePath = "src/main/kotlin/dev/teogor/pixel/harvest/dictionary/generated"
     val items = parseTextFile(inputFilePath, outputFilePath, datasetName)
