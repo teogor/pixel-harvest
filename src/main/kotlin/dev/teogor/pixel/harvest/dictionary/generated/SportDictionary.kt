@@ -13,6 +13,16 @@ private val teamSportsSet = setOf(
     "hockey",
     "handball",
     "water polo",
+    "field hockey",
+    "lacrosse",
+    "netball",
+    "kabaddi",
+    "american football",
+    "softball",
+    "polo",
+    "buzkashi",
+    "korfball",
+    "quidditch",
 )
 
 private val individualSportsSet = setOf(
@@ -26,6 +36,15 @@ private val individualSportsSet = setOf(
     "skiing",
     "surfing",
     "martial arts",
+    "figure skating",
+    "triathlon",
+    "skateboarding",
+    "hurdling",
+    "bouldering",
+    "parkour",
+    "pole vaulting",
+    "pole dancing",
+    "rhythmic gymnastics",
 )
 
 private val racketSportsSet = setOf(
@@ -33,6 +52,13 @@ private val racketSportsSet = setOf(
     "table tennis",
     "squash",
     "pickleball",
+    "tennis doubles",
+    "racquetball",
+    "padel",
+    "beach tennis",
+    "real tennis",
+    "speedminton",
+    "jai alai",
 )
 
 private val waterSportsSet = setOf(
@@ -43,6 +69,14 @@ private val waterSportsSet = setOf(
     "windsurfing",
     "paddleboarding",
     "synchronized swimming",
+    "water skiing",
+    "scuba diving",
+    "snorkeling",
+    "water polo",
+    "jet skiing",
+    "canoeing",
+    "rafting",
+    "wakeboarding",
 )
 
 private val combatSportsSet = setOf(
@@ -50,6 +84,14 @@ private val combatSportsSet = setOf(
     "judo",
     "taekwondo",
     "karate",
+    "boxing",
+    "muay thai",
+    "jiu-jitsu",
+    "sumo wrestling",
+    "krav maga",
+    "sambo",
+    "kendo",
+    "capoeira",
 )
 
 private val outdoorSportsSet = setOf(
@@ -58,6 +100,16 @@ private val outdoorSportsSet = setOf(
     "fishing",
     "hiking",
     "horseback riding",
+    "mountain biking",
+    "camping",
+    "orienteering",
+    "paragliding",
+    "canopying",
+    "trail running",
+    "ultramarathon",
+    "geocaching",
+    "bungee jumping",
+    "ice climbing",
 )
 
 private val winterSportsSet = setOf(
@@ -65,6 +117,16 @@ private val winterSportsSet = setOf(
     "ice hockey",
     "curling",
     "bobsleigh",
+    "ski jumping",
+    "speed skating",
+    "biathlon",
+    "figure skating",
+    "skeleton",
+    "cross-country skiing",
+    "snowshoeing",
+    "ice fishing",
+    "snowmobiling",
+    "snowkiting",
 )
 
 private val motorSportsSet = setOf(
@@ -72,6 +134,17 @@ private val motorSportsSet = setOf(
     "motocross",
     "rally racing",
     "motorcycle racing",
+    "go-karting",
+    "drag racing",
+    "superbike racing",
+    "enduro racing",
+    "off-road racing",
+    "hill climbing",
+    "monster truck racing",
+    "powerboat racing",
+    "snowmobile racing",
+    "truck racing",
+    "drifting",
 )
 
 private val targetSportsSet = setOf(
@@ -79,6 +152,17 @@ private val targetSportsSet = setOf(
     "darts",
     "billiards",
     "target archery",
+    "skeet shooting",
+    "golf darts",
+    "bowling",
+    "snooker",
+    "lawn bowls",
+    "axe throwing",
+    "laser tag",
+    "airsoft",
+    "paintball",
+    "horseshoes",
+    "knife throwing",
 )
 
 private val adventureSportsSet = setOf(
@@ -86,6 +170,17 @@ private val adventureSportsSet = setOf(
     "paragliding",
     "rock climbing",
     "parkour",
+    "canyoning",
+    "base jumping",
+    "kiteboarding",
+    "caving",
+    "ice climbing",
+    "white-water rafting",
+    "sandboarding",
+    "slacklining",
+    "canyoneering",
+    "tree climbing",
+    "ice swimming",
 )
 
 private val otherSportsSet = setOf(
@@ -93,6 +188,17 @@ private val otherSportsSet = setOf(
     "poker",
     "bowling",
     "chess boxing",
+    "ultimate frisbee",
+    "canoe polo",
+    "fencing",
+    "golf",
+    "swimming pool",
+    "roller skating",
+    "yoga",
+    "cycling polo",
+    "dog agility",
+    "tug of war",
+    "cheerleading",
 )
 
 class SportDictionary(list: Set<String>) : Dictionary(list) {

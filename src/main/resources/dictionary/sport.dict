@@ -10,6 +10,16 @@ rugby
 hockey
 handball
 water polo
+field hockey
+lacrosse
+netball
+kabaddi
+american football
+softball
+polo
+buzkashi
+korfball
+quidditch
 
 ::category::individual sports
 tennis
@@ -22,12 +32,28 @@ gymnastics
 skiing
 surfing
 martial arts
+figure skating
+triathlon
+skateboarding
+hurdling
+bouldering
+parkour
+pole vaulting
+pole dancing
+rhythmic gymnastics
 
 ::category::racket sports
 badminton
 table tennis
 squash
 pickleball
+tennis doubles
+racquetball
+padel
+beach tennis
+real tennis
+speedminton
+jai alai
 
 ::category::water sports
 kayaking
@@ -37,12 +63,28 @@ diving
 windsurfing
 paddleboarding
 synchronized swimming
+water skiing
+scuba diving
+snorkeling
+water polo
+jet skiing
+canoeing
+rafting
+wakeboarding
 
 ::category::combat sports
 wrestling
 judo
 taekwondo
 karate
+boxing
+muay thai
+jiu-jitsu
+sumo wrestling
+krav maga
+sambo
+kendo
+capoeira
 
 ::category::outdoor sports
 archery
@@ -50,33 +92,97 @@ climbing
 fishing
 hiking
 horseback riding
+mountain biking
+camping
+orienteering
+paragliding
+canopying
+trail running
+ultramarathon
+geocaching
+bungee jumping
+ice climbing
 
 ::category::winter sports
 snowboarding
 ice hockey
 curling
 bobsleigh
+ski jumping
+speed skating
+biathlon
+figure skating
+skeleton
+cross-country skiing
+snowshoeing
+ice fishing
+snowmobiling
+snowkiting
 
 ::category::motor sports
 formula 1
 motocross
 rally racing
 motorcycle racing
+go-karting
+drag racing
+superbike racing
+enduro racing
+off-road racing
+hill climbing
+monster truck racing
+powerboat racing
+snowmobile racing
+truck racing
+drifting
 
 ::category::target sports
 shooting
 darts
 billiards
 target archery
+skeet shooting
+golf darts
+bowling
+snooker
+lawn bowls
+axe throwing
+laser tag
+airsoft
+paintball
+horseshoes
+knife throwing
 
 ::category::adventure sports
 skydiving
 paragliding
 rock climbing
 parkour
+canyoning
+base jumping
+kiteboarding
+caving
+ice climbing
+white-water rafting
+sandboarding
+slacklining
+canyoneering
+tree climbing
+ice swimming
 
 ::category::other sports
 chess
 poker
 bowling
 chess boxing
+ultimate frisbee
+canoe polo
+fencing
+golf
+swimming pool
+roller skating
+yoga
+cycling polo
+dog agility
+tug of war
+cheerleading
