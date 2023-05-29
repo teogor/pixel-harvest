@@ -3,6 +3,7 @@ package dev.teogor.pixel.harvest.dictionary
 import dev.teogor.pixel.harvest.dictionary.generated.ArtStyleDictionary
 import dev.teogor.pixel.harvest.dictionary.generated.ShapeDictionary
 import java.io.File
+import java.util.Locale
 import java.util.SortedSet
 
 fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: String): SortedSet<String> {
@@ -23,7 +24,7 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
             currentCategory = trimmedLine.removePrefix("::category::")
             hasCategories = true
         } else if (trimmedLine.isNotBlank()) {
-            categories.getOrPut(currentCategory) { mutableSetOf() }.add(trimmedLine)
+            categories.getOrPut(currentCategory) { mutableSetOf() }.add(trimmedLine.lowercase())
         }
     }
 
@@ -34,8 +35,16 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
         writer.write("import dev.teogor.pixel.harvest.dictionary.Dictionary\n\n")
 
         categories.forEach { (category, itemList) ->
-            val categoryName = category.toCamelCase()
-            val categoryNameLower = categoryName.replaceFirstChar { it.lowercase() }
+            val categoryNameLower = category.split(" ")
+                .joinToString("") {
+                    it.replaceFirstChar {
+                        if (it.isLowerCase())
+                            it.titlecase(Locale.getDefault())
+                        else
+                            it.toString()
+                    }
+                }
+                .replaceFirstChar { it.lowercase() }
             val variableName = if (hasCategories) {
                 "${categoryNameLower}Set"
             } else {
@@ -54,15 +63,42 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
         writer.write("    enum class ${name}Types(private val ${nameLower}Set: Set<String>) : Type {\n")
         if (hasCategories) {
             categories.forEach { (category, _) ->
-                val categoryName = category.uppercase()
-                writer.write("        $categoryName(${category}Set),\n")
+                val categoryName = category.uppercase().replace(" ", "_")
+                val categoryNameLower = category.split(" ")
+                    .joinToString("") {
+                        it.replaceFirstChar {
+                            if (it.isLowerCase())
+                                it.titlecase(Locale.getDefault())
+                            else
+                                it.toString()
+                        }
+                    }
+                    .replaceFirstChar { it.lowercase() }
+                val variableName = "${categoryNameLower}Set"
+                writer.write("        $categoryName(${variableName}),\n")
             }
         }
-        writer.write("        ALL(${if (hasCategories) categories.keys.joinToString("Set + ") + "Set" else "list"});\n\n")
+        val allListSet = if (hasCategories) {
+            categories.keys.joinToString("Set + ") { category ->
+                category.split(" ")
+                    .joinToString("") {
+                        it.replaceFirstChar {
+                            if (it.isLowerCase())
+                                it.titlecase(Locale.getDefault())
+                            else
+                                it.toString()
+                        }
+                    }
+                    .replaceFirstChar { it.lowercase() }
+            } + "Set"
+        } else {
+            "list"
+        }
+        writer.write("        ALL($allListSet);\n\n")
         writer.write("        override fun getSet(): Set<String> {\n")
         writer.write("            return ${nameLower}Set\n")
         writer.write("        }\n")
-        writer.write("    }\n")
+        writer.write("    }\n\n")
         writer.write("    companion object {\n")
         writer.write("        fun builder(block: ${className}Builder.() -> Unit): $className {\n")
         writer.write("            val builder = ${className}Builder()\n")
@@ -71,6 +107,15 @@ fun parseTextFile(inputFilePath: String, outputFilePath: String, datasetName: St
         writer.write("        }\n")
         writer.write("    }\n\n")
         writer.write("}\n")
+    }
+
+    inputFile.bufferedWriter().use { writer ->
+        categories.forEach { (category, itemList) ->
+            writer.write("\n::category::${category.lowercase()}\n")
+            itemList.forEach { item ->
+                writer.write("$item\n")
+            }
+        }
     }
 
     return sortedItems
