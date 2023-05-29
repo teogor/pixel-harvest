@@ -1,0 +1,99 @@
+
+::category::age
+infant
+child
+preteen
+teenager
+young adult
+adult
+middle-aged adult
+senior citizen
+
+::category::gender
+male
+female
+non-binary
+transgender
+genderqueer
+genderfluid
+other
+
+::category::education level
+no formal education
+preschool
+primary school
+secondary school
+high school diploma
+vocational training
+associate's degree
+bachelor's degree
+master's degree
+doctorate degree
+
+::category::occupation
+unemployed
+student
+entry-level worker
+mid-level professional
+senior-level professional
+entrepreneur
+freelancer
+homemaker
+retired
+
+::category::marital status
+single
+married
+divorced
+separated
+widowed
+
+::category::parental status
+no children
+expecting a child
+parent of infants
+parent of toddlers
+parent of school-age children
+parent of teenagers
+empty nester
+
+::category::ethnicity
+caucasian
+african american
+hispanic/latinx
+asian
+native american
+middle eastern
+multiracial
+
+::category::religion
+christianity
+islam
+judaism
+hinduism
+buddhism
+sikhism
+
+::category::socioeconomic status
+low income
+middle income
+high income
+
+::category::disability status
+physical disability
+intellectual disability
+sensory disability
+mental health condition
+chronic illness
+
+::category::lgbtq identity
+lesbian
+gay
+bisexual
+queer
+pansexual
+asexual
+
+::category::veteran status
+veteran
+non-veteran
