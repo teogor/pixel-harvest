@@ -436,6 +436,7 @@ sealed class SlashCommand {
                 interactionToken = response.token,
                 messageId = message.id,
             ) {
+                content = ""
                 embeds = mutableListOf(
                     EmbedBuilder().apply {
                         title = "Your Info - $username"
