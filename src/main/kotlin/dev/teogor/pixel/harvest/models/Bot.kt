@@ -74,7 +74,6 @@ sealed class Bot {
          * ```
          */
         fun isKnownBot(userId: Long): Pair<Boolean, Bot?> {
-            println("isKnownBot=$userId")
             if (userId == 0L) {
                 return Pair(false, null)
             }
