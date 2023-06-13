@@ -129,7 +129,7 @@ fun parseTextFile(inputFile: File, outputFilePath: String, datasetName: String):
     return sortedItems
 }
 
-const val generatePrompt = false
+const val generatePrompt = true
 fun main() {
     if (generatePrompt) {
         repeat(5) {
@@ -156,19 +156,19 @@ fun generatePrompt() {
         ColorDictionary.builder {
             addType(ColorDictionary.ColorTypes.FUNDAMENTAL_COLORS)
             addType(ColorDictionary.ColorTypes.NEUTRAL_COLORS)
-        } to 5,
+        } to 2,
         ArtStyleDictionary.builder {
             addType(ArtStyleDictionary.ArtStyleTypes.ALL)
-        } to 2,
+        } to 1,
         ShapeDictionary.builder {
             addType(ShapeDictionary.ShapeTypes.ALL)
         } to 1,
-        SportDictionary.builder {
-            addType(SportDictionary.SportTypes.ALL)
-        } to 1,
-        CameraAngleDictionary.builder {
-            addType(CameraAngleDictionary.CameraAngleTypes.ALL)
-        } to 1
+        // SportDictionary.builder {
+        //     addType(SportDictionary.SportTypes.ALL)
+        // } to 1,
+        // CameraAngleDictionary.builder {
+        //     addType(CameraAngleDictionary.CameraAngleTypes.ALL)
+        // } to 1
     )
 
     // Print the generated unique elements
