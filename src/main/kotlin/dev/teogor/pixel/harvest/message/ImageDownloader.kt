@@ -29,11 +29,13 @@ import java.net.URL
 object ImageDownloader {
     private val downloadQueue: MutableList<Message> = mutableListOf()
     private var isDownloading: Boolean = false
+    private var queueSizeCallback: ((Int) -> Unit)? = null
 
     fun addToQueue(message: Message) {
         message.addReaction(Emoji.FileDownloadQueue)
         if (!downloadQueue.contains(message)) {
             downloadQueue.add(message)
+            notifyQueueSizeChanged()
         }
 
         if (!isDownloading) {
@@ -41,11 +43,21 @@ object ImageDownloader {
         }
     }
 
+    fun currentQueueSize(callback: (Int) -> Unit) {
+        queueSizeCallback = callback
+        notifyQueueSizeChanged()
+    }
+
+    private fun notifyQueueSizeChanged() {
+        queueSizeCallback?.invoke(downloadQueue.size)
+    }
+
     private fun startDownloading() {
         isDownloading = true
 
         while (downloadQueue.isNotEmpty()) {
             val message = downloadQueue.removeAt(0)
+            notifyQueueSizeChanged()
             downloadImages(message)
         }
 
@@ -185,6 +197,7 @@ object ImageDownloader {
                 }
             }
         }
+        notifyQueueSizeChanged()
     }
 }
 

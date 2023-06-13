@@ -1,5 +1,6 @@
 package dev.teogor.pixel.harvest.slash
 
+import dev.kord.common.entity.DiscordMessage
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.interaction.response.DeferredEphemeralMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
@@ -16,6 +17,7 @@ import dev.teogor.pixel.harvest.BotManager.kord
 import dev.teogor.pixel.harvest.beta.ColorPairGenerator
 import dev.teogor.pixel.harvest.database.DatabaseManager.getTotalDownloadCountByDiscordUser
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
+import dev.teogor.pixel.harvest.message.ImageDownloader
 import dev.teogor.pixel.harvest.message.getBasePathForImages
 import dev.teogor.pixel.harvest.svg.ProcessingStep
 import dev.teogor.pixel.harvest.svg.ProgressData
@@ -171,6 +173,9 @@ sealed class SlashCommand {
         }
     }
 
+    /**
+     * todo: add delete button since this is not ephemeral
+     */
     object GenerateSlashCommand : SlashCommand() {
         private var isRunning = false
 
@@ -431,6 +436,43 @@ sealed class SlashCommand {
             val username = author.username
 
             val downloadCount = getTotalDownloadCountByDiscordUser(author.id.value.toLong())
+            var currentDownloadQueue = 0
+            ImageDownloader.currentQueueSize { size ->
+                // Handle the updated queue size here
+                currentDownloadQueue = size
+
+                runBlocking {
+                    sendInfoMessage(
+                        interaction = interaction,
+                        response = response,
+                        message = message,
+                        username = username,
+                        downloadCount = downloadCount,
+                        rootPath = rootPath,
+                        currentDownloadQueue = currentDownloadQueue
+                    )
+                }
+            }
+            sendInfoMessage(
+                interaction = interaction,
+                response = response,
+                message = message,
+                username = username,
+                downloadCount = downloadCount,
+                rootPath = rootPath,
+                currentDownloadQueue = currentDownloadQueue
+            )
+        }
+
+        private suspend fun sendInfoMessage(
+            interaction: GuildChatInputCommandInteraction,
+            response: DeferredEphemeralMessageInteractionResponseBehavior,
+            message: DiscordMessage,
+            username: String,
+            downloadCount: Long,
+            rootPath: String,
+            currentDownloadQueue: Int
+        ) {
             kord.rest.interaction.modifyFollowupMessage(
                 applicationId = interaction.applicationId,
                 interactionToken = response.token,
@@ -441,12 +483,15 @@ sealed class SlashCommand {
                     EmbedBuilder().apply {
                         title = "Your Info - $username"
                         description = """
-                            **Lifetime Images Downloaded:** `$downloadCount`
-            
-                            **Auto Download:**  `Active`
-                            **Channel Subdirectory:**  `Disabled`
-                            **Download Folder Root:**  `${rootPath}`
-                        """.trimIndent()
+                    **Lifetime Images Downloaded:** `$downloadCount`
+    
+                    **Auto Download:**  `Active`
+                    **Channel Subdirectory:**  `Disabled`
+                    **Download Folder Root:**  `${rootPath}`
+                    
+                    **Queued Jobs (download)**: $currentDownloadQueue
+                    **Running Jobs**: None
+                """.trimIndent()
                         color = Colors.GREEN
                     }
                 )
