@@ -7,7 +7,6 @@ import dev.teogor.pixel.harvest.svg.rasterizer.SvgRasterizer
 import dev.teogor.pixel.harvest.svg.rasterizer.processResult
 import dev.teogor.pixel.harvest.svg.utils.ImageExtension
 import dev.teogor.pixel.harvest.svg.utils.createDirectoryIfNotExists
-import dev.teogor.pixel.harvest.svg.utils.generateFileNameTemplate
 import dev.teogor.pixel.harvest.svg.utils.generateRandomNumber
 import dev.teogor.pixel.harvest.svg.utils.getFormattedDate
 import dev.teogor.pixel.harvest.svg.utils.getFormattedDate2
@@ -19,6 +18,7 @@ import org.apache.hc.client5.http.fluent.Request
 import org.apache.hc.core5.http.ClassicHttpResponse
 import java.io.File
 import java.io.FileWriter
+import kotlin.math.max
 
 /**
  * The SvgConverter class provides functionality to convert SVG files and images.
@@ -31,6 +31,10 @@ import java.io.FileWriter
  * @param rasterizer       The SvgRasterizer instance for converting SVG to images.
  * @param useSvgGenerator  Flag indicating whether to use the SvgGenerator.
  * @param useSvgRasterizer Flag indicating whether to use the SvgRasterizer.
+ * @param includeDataset   Flag indicating whether to include dataset for AI training.
+ * @param splitEnabled     Flag indicating whether to split generated images into SVG and scaled versions.
+ *                         Images will alternate between SVG and scaled versions based on index.
+ * @param progressListener The progress listener for tracking conversion progress.
  * @param batchNumber      The batch number for the converted images.
  */
 class SvgConverter private constructor(
@@ -41,6 +45,7 @@ class SvgConverter private constructor(
     private val useSvgGenerator: Boolean,
     private val useSvgRasterizer: Boolean,
     private val includeDataset: Boolean,
+    private val splitEnabled: Boolean,
     private val progressListener: ProgressListener,
     private val batchNumber: Int,
 ) {
@@ -69,6 +74,15 @@ class SvgConverter private constructor(
             "$generatorOutputDirectory/scaled"
         } else {
             "${outputFolder.parentFile.parentFile.path}/scaled"
+        }
+    } else {
+        ""
+    }
+    private val splitImagesOutputDirectory: String = if (splitEnabled) {
+        if (useSvgGenerator) {
+            "$generatorOutputDirectory/split"
+        } else {
+            "${outputFolder.parentFile.parentFile.path}/split"
         }
     } else {
         ""
@@ -131,6 +145,7 @@ class SvgConverter private constructor(
         if (useSvgGenerator && useSvgRasterizer) {
             generateSvg()
             rasterizeSvg()
+            prepareSplitImages()
         } else if (useSvgGenerator) {
             generateSvg()
         } else if (useSvgRasterizer) {
@@ -349,12 +364,49 @@ class SvgConverter private constructor(
         // println("Average Saving Time:     ${averageSaveTime.formatDuration()}")
     }
 
+    private fun prepareSplitImages() {
+        if (!splitEnabled) {
+            return
+        }
+
+        val svgDirectory = File(rasterizerInputDirectory)
+        val scaledDirectory = File(rasterizerOutputDirectory)
+        val outputDirectory = File(splitImagesOutputDirectory)
+
+        if (!svgDirectory.exists() || !scaledDirectory.exists()) {
+            return
+        }
+
+        val svgFiles = svgDirectory.listFiles() ?: emptyArray()
+        val scaledFiles = scaledDirectory.listFiles() ?: emptyArray()
+
+        val maxIndex = max(svgFiles.size, scaledFiles.size)
+
+        for (index in 0 until maxIndex) {
+            val svgFile = svgFiles.getOrNull(index)
+            val scaledFile = scaledFiles.getOrNull(index)
+
+            if (index % 2 == 0) {
+                if (svgFile != null) {
+                    val outputSvgFile = File(outputDirectory, svgFile.name)
+                    svgFile.copyTo(outputSvgFile, overwrite = true)
+                }
+            } else {
+                if (scaledFile != null) {
+                    val outputScaledFile = File(outputDirectory, scaledFile.name)
+                    scaledFile.copyTo(outputScaledFile, overwrite = true)
+                }
+            }
+        }
+    }
+
+
     private fun dispatchProgress(
         progressData: ProgressData,
         currentIndex: Int,
     ) {
         runBlocking {
-            //todo error
+            // todo error
             // dev.kord.rest.request.KtorRequestException: REST request returned an error: 401 Unauthorized  Invalid Webhook Token null
             // at dev.kord.rest.request.KtorRequestHandler.handle(KtorRequestHandler.kt:61)
             // at dev.kord.rest.request.KtorRequestHandler$handle$1.invokeSuspend(KtorRequestHandler.kt)
@@ -392,6 +444,7 @@ class SvgConverter private constructor(
         private var useSvgGenerator: Boolean = false
         private var useSvgRasterizer: Boolean = false
         private var includeDataset: Boolean = false
+        private var splitEnabled: Boolean = false
         private var batchNumber: Int = 0
         private var progressListener: ProgressListener = object : ProgressListener() {
             override suspend fun onProgress(progressData: ProgressData) {
@@ -449,6 +502,16 @@ class SvgConverter private constructor(
         }
 
         /**
+         * Sets whether to split generated images into SVG and scaled versions, alternating by index.
+         *
+         * @param enabled Flag indicating whether to enable splitting of images.
+         * @return The Builder instance.
+         */
+        fun withSplitEnabled(enabled: Boolean) = apply {
+            this.splitEnabled = enabled
+        }
+
+        /**
          * Builds and returns an instance of SvgConverter with the specified parameters.
          *
          * @return An instance of SvgConverter.
@@ -461,6 +524,7 @@ class SvgConverter private constructor(
             useSvgGenerator = useSvgGenerator,
             useSvgRasterizer = useSvgRasterizer,
             includeDataset = includeDataset,
+            splitEnabled = splitEnabled,
             progressListener = progressListener,
             batchNumber = batchNumber,
         )

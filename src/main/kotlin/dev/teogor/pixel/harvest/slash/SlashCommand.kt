@@ -188,6 +188,7 @@ sealed class SlashCommand {
 
         private const val optionIncludeDataset = "include-dataset"
         private const val optionScalingEnabled = "scaling-enabled"
+        private const val optionSplitEnabled = "split-enabled"
 
         override fun withOptions(chatInputCreateBuilder: ChatInputCreateBuilder) {
             super.withOptions(chatInputCreateBuilder)
@@ -203,6 +204,13 @@ sealed class SlashCommand {
                 boolean(
                     name = optionScalingEnabled,
                     description = "Enable scaling by 6x for generated SVGs images for more versatile output."
+                ) {
+                    required = false
+                    default = false
+                }
+                boolean(
+                    name = optionSplitEnabled,
+                    description = "Split generated images into SVG and scaled versions, alternating by index."
                 ) {
                     required = false
                     default = false
@@ -248,6 +256,7 @@ sealed class SlashCommand {
             val command = interaction.command
             val includeDataset = command.options[optionIncludeDataset]?.value?.asBooleanOrDefault() ?: false
             val scalingEnabled = command.options[optionScalingEnabled]?.value?.asBooleanOrDefault() ?: false
+            val splitEnabled = command.options[optionSplitEnabled]?.value?.asBooleanOrDefault() ?: false
 
             val baseDownloadPath = kord.getBasePathForImages(
                 interaction = interaction,
@@ -374,8 +383,9 @@ sealed class SlashCommand {
 
             SvgConverter.Builder(inputFolder, outputFolder)
                 .withSvgGenerator(true)
-                .withSvgRasterizer(scalingEnabled)
+                .withSvgRasterizer(scalingEnabled || splitEnabled)
                 .withIncludeDataset(includeDataset)
+                .withSplitEnabled(splitEnabled)
                 .withBatchNumber(nextFolder)
                 .withProgressListener(progressListener)
                 .build()
