@@ -186,13 +186,23 @@ sealed class SlashCommand {
 
         override val description: String = "Generate SVGs and scaled images for recent downloads."
 
+        private const val optionIncludeDataset = "include-dataset"
+        private const val optionScalingEnabled = "scaling-enabled"
+
         override fun withOptions(chatInputCreateBuilder: ChatInputCreateBuilder) {
             super.withOptions(chatInputCreateBuilder)
 
             chatInputCreateBuilder.apply {
                 boolean(
-                    name = "include-dataset",
+                    name = optionIncludeDataset,
                     description = "Include dataset generation along with SVGs and scaled images."
+                ) {
+                    required = false
+                    default = false
+                }
+                boolean(
+                    name = optionScalingEnabled,
+                    description = "Enable scaling by 6x for generated SVGs images for more versatile output."
                 ) {
                     required = false
                     default = false
@@ -236,7 +246,8 @@ sealed class SlashCommand {
             val username = author.username
 
             val command = interaction.command
-            val includeDataset = command.options["include-dataset"]?.value?.asBooleanOrDefault() ?: false
+            val includeDataset = command.options[optionIncludeDataset]?.value?.asBooleanOrDefault() ?: false
+            val scalingEnabled = command.options[optionScalingEnabled]?.value?.asBooleanOrDefault() ?: false
 
             val baseDownloadPath = kord.getBasePathForImages(
                 interaction = interaction,
@@ -363,7 +374,7 @@ sealed class SlashCommand {
 
             SvgConverter.Builder(inputFolder, outputFolder)
                 .withSvgGenerator(true)
-                .withSvgRasterizer(true)
+                .withSvgRasterizer(scalingEnabled)
                 .withIncludeDataset(includeDataset)
                 .withBatchNumber(nextFolder)
                 .withProgressListener(progressListener)
