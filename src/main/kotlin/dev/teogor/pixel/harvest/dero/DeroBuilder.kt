@@ -1,6 +1,8 @@
 package dev.teogor.pixel.harvest.dero
 
 import dev.teogor.pixel.harvest.discord.PathUtils
+import dev.teogor.pixel.harvest.svg.ProcessingStep
+import dev.teogor.pixel.harvest.svg.ProgressData
 import dev.teogor.pixel.harvest.svg.generator.VectorizerAiToken
 import dev.teogor.pixel.harvest.svg.rasterizer.SvgFile
 import dev.teogor.pixel.harvest.svg.rasterizer.SvgRasterizer
@@ -23,9 +25,16 @@ import kotlin.random.Random
 fun main() {
     val folderPath = "${PathUtils.getDownloadsFolderPath()}\\PixelHarvest\\ZeoAI-Automation\\images"
 
-    println(folderPath)
     runBlocking {
-        val deroBuilder = DeroBuilder(folderPath)
+        val deroListener: DeroBuilder.Listener = object : DeroBuilder.Listener() {
+            override suspend fun onProgress(progressData: ProgressData) {
+                println(progressData)
+            }
+        }
+        val deroBuilder = DeroBuilder(
+            folderPath,
+            deroListener
+        )
 
         if (!deroBuilder.copyFilesToNewFolder()) {
             println("error at renaming")
@@ -66,7 +75,23 @@ class DeroPaths {
 
 class DeroBuilder(
     private val targetFolderPath: String,
+    private val progressListener: Listener = Listener.EMPTY,
 ) {
+
+    open class Listener {
+        open suspend fun onProgress(progressData: ProgressData) {
+        }
+
+        companion object {
+
+            val EMPTY: Listener = object : Listener() {
+                override suspend fun onProgress(progressData: ProgressData) {
+                    // empty
+                }
+            }
+
+        }
+    }
 
     @OptIn(DelicateCoroutinesApi::class)
     private val dispatcher = newFixedThreadPoolContext(4, "DeroBuilder")
@@ -158,14 +183,17 @@ class DeroBuilder(
         var currentFileIndex = 0
         val imageExtensions = listOf("jpg", "jpeg", "png")
 
-        currentFileIndex++
         val imageFiles = jobFolder.getFilesWithExtensions(imageExtensions)
 
+        val progressData = ProgressData(
+            currentIndex = currentFileIndex,
+            processingStep = ProcessingStep.GENERATING_SVG,
+        )
+        progressListener.onProgress(progressData)
         imageFiles.map { imageFile ->
             launch(dispatcher) {
                 val fileName = imageFile.nameWithoutExtension
                 val fileExtension = imageFile.extension
-                println("$fileName is *.$fileExtension $currentFileIndex")
                 val request = Request.post("https://vectorizer.ai/api/v1/vectorize")
                     .addHeader(
                         "Authorization",
@@ -180,7 +208,7 @@ class DeroBuilder(
 
                 if (response.code == 200) {
                     val outputFileSvg = File("${svgFolderPath}/${fileName}.svg")
-                    val outputFileImage = File("${originalFolderPath}/${fileName}.${imageFile.extension}")
+                    val outputFileImage = File("${originalFolderPath}/${fileName}.${fileExtension}")
 
                     imageFile.copyTo(outputFileImage)
                     response.entity.writeTo(outputFileSvg.outputStream())
@@ -191,6 +219,9 @@ class DeroBuilder(
                     }
                 }
                 currentFileIndex++
+                progressListener.onProgress(progressData.copy(
+                    currentIndex = currentFileIndex
+                ))
             }
         }
 
@@ -207,10 +238,14 @@ class DeroBuilder(
         var processedCount = 0
 
         var currentFileIndex = 0
-        currentFileIndex++
 
         val svgFiles = svgFolder.getFilesWithExtensions(listOf("svg"))
 
+        val progressData = ProgressData(
+            currentIndex = currentFileIndex,
+            processingStep = ProcessingStep.SCALING_SVG,
+        )
+        progressListener.onProgress(progressData)
         svgFiles.map { svgFile ->
             launch(dispatcher) {
                 val conversionResult = rasterizer.convert(
@@ -236,10 +271,13 @@ class DeroBuilder(
                     },
                 )
                 currentFileIndex++
+                progressListener.onProgress(progressData.copy(
+                    currentIndex = currentFileIndex
+                ))
             }
         }
 
-        return@withContext processedCount != 0
+        return@withContext true
     }
 
     suspend fun createSplitDataset(): Boolean = withContext(Dispatchers.IO) {

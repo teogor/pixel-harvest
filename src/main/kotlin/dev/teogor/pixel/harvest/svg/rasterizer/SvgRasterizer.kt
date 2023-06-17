@@ -43,7 +43,7 @@ class SvgRasterizer {
 
             // Scale the SVG document
             val scaleStartTime = System.currentTimeMillis()
-            val scaledDocument = svgDocument.scaleSvgDocument(svgFile.scaleFactor)
+            val scaledDocument = svgDocument.scaleSvgDocument(svgFile.inputFile.nameWithoutExtension, svgFile.scaleFactor)
             val scaleEndTime = System.currentTimeMillis()
             val scaleTime = scaleEndTime - scaleStartTime
 

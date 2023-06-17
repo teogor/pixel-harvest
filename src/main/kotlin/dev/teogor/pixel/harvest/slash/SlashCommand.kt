@@ -16,6 +16,7 @@ import dev.kord.rest.json.request.BulkDeleteRequest
 import dev.teogor.pixel.harvest.BotManager.kord
 import dev.teogor.pixel.harvest.beta.ColorPairGenerator
 import dev.teogor.pixel.harvest.database.DatabaseManager.getTotalDownloadCountByDiscordUser
+import dev.teogor.pixel.harvest.dero.DeroBuilder
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.message.ImageDownloader
 import dev.teogor.pixel.harvest.message.getBasePathForImages
@@ -294,7 +295,7 @@ sealed class SlashCommand {
             var totalTimeElapsed = 0L
             var previousTime = System.currentTimeMillis()
             var progressCalls = 0
-            val progressListener = object : ProgressListener() {
+            val deroListener: DeroBuilder.Listener = object : DeroBuilder.Listener() {
                 override suspend fun onProgress(progressData: ProgressData) {
                     val currentTime = System.currentTimeMillis()
                     val timeElapsed = currentTime - previousTime
@@ -383,17 +384,36 @@ sealed class SlashCommand {
                 }
             }
 
-            progressListener.onProgress(progressData)
+            deroListener.onProgress(progressData)
 
             try {
-                SvgConverter.Builder(inputFolder, outputFolder)
-                    .withSvgGenerator(true)
-                    .withSvgRasterizer(scalingEnabled || splitEnabled)
-                    .withIncludeDataset(includeDataset)
-                    .withSplitEnabled(splitEnabled)
-                    .withBatchNumber(nextFolder)
-                    .withProgressListener(progressListener)
-                    .build()
+                runBlocking {
+                    val deroBuilder = DeroBuilder(
+                        rootPath,
+                        deroListener
+                    )
+
+                    if (!deroBuilder.copyFilesToNewFolder()) {
+                        println("error at renaming")
+                    }
+                    if (!deroBuilder.renameFiles()) {
+                        println("error at renaming")
+                    }
+                    if (!deroBuilder.generateSvg()) {
+                        println("error at converting SVGs")
+                    }
+                    if (scalingEnabled || splitEnabled) {
+                        if (!deroBuilder.rasterizeSvg()) {
+                            println("error at rasterize SVGs")
+                        }
+                    }
+                    if (splitEnabled) {
+                        if (!deroBuilder.createSplitDataset()) {
+                            println("error at rasterize SVGs")
+                        }
+                    }
+                    println("Done!")
+                }
             } catch (_: Throwable) {
                 isRunning = false
             }

@@ -37,6 +37,7 @@ import kotlin.math.max
  * @param progressListener The progress listener for tracking conversion progress.
  * @param batchNumber      The batch number for the converted images.
  */
+@Deprecated(message = "Use DeroBuilder")
 class SvgConverter private constructor(
     private val inputFolder: File,
     private val outputFolder: File,

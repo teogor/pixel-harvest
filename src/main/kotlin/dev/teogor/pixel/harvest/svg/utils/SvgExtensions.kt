@@ -28,7 +28,7 @@ fun File.loadSvgDocument(): SVGDocument {
  * @param scale    The scale factor.
  * @return The scaled SVG document.
  */
-fun Document.scaleSvgDocument(scale: Double): SVGDocument {
+fun Document.scaleSvgDocument(name: String, scale: Double): SVGDocument {
     val transformer = TransformerFactory.newInstance().newTransformer()
     transformer.setParameter("scale", scale)
 
@@ -40,7 +40,7 @@ fun Document.scaleSvgDocument(scale: Double): SVGDocument {
     transformer.transform(source, result)
 
     val scaledSvgBytes = outputStream.toByteArray()
-    val scaledSvgTempFile = File(".temp.svg")
+    val scaledSvgTempFile = File("$name.temp.svg")
     FileOutputStream(scaledSvgTempFile).use { it.write(scaledSvgBytes) }
 
     val scaledDocument = scaledSvgTempFile.loadSvgDocument()
