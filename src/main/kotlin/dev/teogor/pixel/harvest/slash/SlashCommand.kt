@@ -412,6 +412,9 @@ sealed class SlashCommand {
                             println("error at rasterize SVGs")
                         }
                     }
+                    deroListener.onProgress(progressData.copy(
+                        processingStep = ProcessingStep.DONE
+                    ))
                     println("Done!")
                 }
             } catch (_: Throwable) {
