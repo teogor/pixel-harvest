@@ -6,12 +6,11 @@ import dev.teogor.pixel.harvest.svg.rasterizer.SvgFile
 import dev.teogor.pixel.harvest.svg.rasterizer.SvgRasterizer
 import dev.teogor.pixel.harvest.svg.rasterizer.processResult
 import dev.teogor.pixel.harvest.svg.utils.ImageExtension
+import dev.teogor.pixel.harvest.svg.utils.getFilesWithExtensions
 import dev.teogor.pixel.harvest.svg.utils.listFilesWithExtensions
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countDirectories
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder
 import org.apache.hc.client5.http.fluent.Request
 import org.apache.hc.core5.http.ClassicHttpResponse
@@ -68,6 +67,9 @@ class DeroPaths {
 class DeroBuilder(
     private val targetFolderPath: String,
 ) {
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private val dispatcher = newFixedThreadPoolContext(4, "DeroBuilder")
 
     var imagesToProcess: Int = 0
 
@@ -128,8 +130,8 @@ class DeroBuilder(
         sourceFolder.listFilesWithExtensions(imageExtensions) { file ->
             val destinationFile = File("$jobFolderPath/${file.name}")
             // todo replace to this once debug is done
-            //  file.renameTo(destinationFile)
-            file.copyTo(destinationFile)
+            file.renameTo(destinationFile)
+            // file.copyTo(destinationFile)
         }
 
         imagesToProcess = sourceFolder.countFiles("")
@@ -157,34 +159,36 @@ class DeroBuilder(
         val imageExtensions = listOf("jpg", "jpeg", "png")
 
         currentFileIndex++
-        // todo try to make multiple requests
-        // todo read the docs. it would be better if we can make around 4 requests at a time
-        jobFolder.listFilesWithExtensions(imageExtensions) { imageFile ->
-            val fileName = imageFile.nameWithoutExtension
-            val fileExtension = imageFile.extension
-            println("$fileName is *.$fileExtension")
-            val request = Request.post("https://vectorizer.ai/api/v1/vectorize")
-                .addHeader(
-                    "Authorization",
-                    "Basic $VectorizerAiToken"
-                )
-                .body(
-                    MultipartEntityBuilder.create()
-                        .addBinaryBody("image", imageFile)
-                        .build()
-                )
-            val response = request.execute().returnResponse() as ClassicHttpResponse
+        val imageFiles = jobFolder.getFilesWithExtensions(imageExtensions)
 
-            if (response.code == 200) {
-                val outputFileSvg = File("${svgFolderPath}/${fileName}.svg")
-                val outputFileImage = File("${originalFolderPath}/${fileName}.${imageFile.extension}")
+        imageFiles.map { imageFile ->
+            launch(dispatcher) {
+                val fileName = imageFile.nameWithoutExtension
+                val fileExtension = imageFile.extension
+                println("$fileName is *.$fileExtension $currentFileIndex")
+                val request = Request.post("https://vectorizer.ai/api/v1/vectorize")
+                    .addHeader(
+                        "Authorization",
+                        "Basic $VectorizerAiToken"
+                    )
+                    .body(
+                        MultipartEntityBuilder.create()
+                            .addBinaryBody("image", imageFile)
+                            .build()
+                    )
+                val response = request.execute().returnResponse() as ClassicHttpResponse
 
-                imageFile.copyTo(outputFileImage)
-                response.entity.writeTo(outputFileSvg.outputStream())
-                response.close()
+                if (response.code == 200) {
+                    val outputFileSvg = File("${svgFolderPath}/${fileName}.svg")
+                    val outputFileImage = File("${originalFolderPath}/${fileName}.${imageFile.extension}")
 
-                if (imageFile.exists()) {
-                    imageFile.delete()
+                    imageFile.copyTo(outputFileImage)
+                    response.entity.writeTo(outputFileSvg.outputStream())
+                    response.close()
+
+                    if (imageFile.exists()) {
+                        imageFile.delete()
+                    }
                 }
                 currentFileIndex++
             }
@@ -204,37 +208,38 @@ class DeroBuilder(
 
         var currentFileIndex = 0
         currentFileIndex++
-        svgFolder.listFilesWithExtensions(listOf("svg")) { svgFile ->
-            val conversionResult = rasterizer.convert(
-                SvgFile(
-                    inputFile = svgFile,
-                    outputFolder = scaledFolder,
-                    scaleFactor = 6.0,
-                    extension = saveExtension,
+
+        val svgFiles = svgFolder.getFilesWithExtensions(listOf("svg"))
+
+        svgFiles.map { svgFile ->
+            launch(dispatcher) {
+                val conversionResult = rasterizer.convert(
+                    SvgFile(
+                        inputFile = svgFile,
+                        outputFolder = scaledFolder,
+                        scaleFactor = 6.0,
+                        extension = saveExtension,
+                    )
                 )
-            )
-            conversionResult.processResult(
-                onSuccess = {
-                    with(it) {
-                        totalProcessingTime += totalTime
-                        totalLoadTime += loadTime
-                        totalScaleTime += scaleTime
-                        totalSaveTime += saveTime
-                        processedCount++
-                    }
-                },
-                onError = {
-                    System.err.println(it.errorMessage)
-                },
-            )
-            currentFileIndex++
+                conversionResult.processResult(
+                    onSuccess = {
+                        with(it) {
+                            totalProcessingTime += totalTime
+                            totalLoadTime += loadTime
+                            totalScaleTime += scaleTime
+                            totalSaveTime += saveTime
+                            processedCount++
+                        }
+                    },
+                    onError = {
+                        System.err.println(it.errorMessage)
+                    },
+                )
+                currentFileIndex++
+            }
         }
 
-        if (processedCount == 0) {
-            return@withContext false
-        }
-
-        return@withContext true
+        return@withContext processedCount != 0
     }
 
     suspend fun createSplitDataset(): Boolean = withContext(Dispatchers.IO) {

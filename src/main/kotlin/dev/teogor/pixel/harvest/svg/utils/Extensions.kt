@@ -89,6 +89,15 @@ fun File.listFilesWithExtensions(
     }
 }
 
+fun File.getFilesWithExtensions(
+    extensions: List<String>,
+): List<File> {
+    return this.listFiles { file ->
+        file.isFile && extensions.any { extension ->
+            file.extension.equals(extension, ignoreCase = true)
+        }
+    }?.toList() ?: emptyList()
+}
 
 /**
  * Generates a random number between 1000 and 9999 (inclusive).
