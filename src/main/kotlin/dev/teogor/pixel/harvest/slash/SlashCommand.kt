@@ -260,7 +260,7 @@ sealed class SlashCommand {
 
             val baseDownloadPath = kord.getBasePathForImages(
                 interaction = interaction,
-                haveChannel = false
+                haveChannel = false,
             )
             val rootPath = "${getDownloadsFolderPath()}\\$baseDownloadPath"
             val inputFolder = File(rootPath)
@@ -449,7 +449,7 @@ sealed class SlashCommand {
             val rootPath = "Downloads\\${
                 kord.getBasePathForImages(
                     interaction = interaction,
-                    haveChannel = false
+                    haveChannel = false,
                 )
             }"
 

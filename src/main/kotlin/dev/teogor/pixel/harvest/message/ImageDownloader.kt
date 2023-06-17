@@ -93,7 +93,7 @@ object ImageDownloader {
                 val basePath = "${getDownloadsFolderPath()}/${
                     BotManager.kord.getBasePathForImages(
                         message = message,
-                        haveChannel = false
+                        haveChannel = false,
                     )
                 }"
 
@@ -227,35 +227,15 @@ fun Message.removeReaction(emoji: Emoji) {
 }
 
 fun Kord.getBasePathForImages(
-    message: Message,
-    haveChannel: Boolean = true,
+    message: Message? = null,
+    interaction: GuildChatInputCommandInteraction? = null,
+    haveChannel: Boolean = true
 ): String {
     var basePath: String
     runBlocking {
-        val guild = message.getGuildOrNull()?.data
-        val channelId = message.channelId
-        val channel = getChannelOf<Channel>(channelId)
-        val serverName = guild?.name?.replace(" ", "-") ?: "Unknown Server"
-        val channelName = channel?.data?.name?.value?.replace(" ", "-") ?: "Unknown Channel"
-
-        basePath = if (haveChannel) {
-            "PixelHarvest/$serverName/images/$channelName/"
-        } else {
-            "PixelHarvest/$serverName/images/"
-        }
-    }
-    return basePath.replace("/", "\\")
-}
-
-fun Kord.getBasePathForImages(
-    interaction: GuildChatInputCommandInteraction,
-    haveChannel: Boolean = true,
-): String {
-    var basePath: String
-    runBlocking {
-        val guild = interaction.getGuildOrNull()?.data
-        val channelId = interaction.channelId
-        val channel = getChannelOf<Channel>(channelId)
+        val guild = message?.getGuildOrNull()?.data ?: interaction?.getGuildOrNull()?.data
+        val channelId = message?.channelId ?: interaction?.channelId
+        val channel = getChannelOf<Channel>(channelId!!)
         val serverName = guild?.name?.replace(" ", "-") ?: "Unknown Server"
         val channelName = channel?.data?.name?.value?.replace(" ", "-") ?: "Unknown Channel"
 
