@@ -52,5 +52,14 @@ sealed class Emoji {
             }
         }
 
+        fun isFileManager(emoji: ReactionEmoji.Custom): Boolean {
+            return when (emoji.id.value.toLong()) {
+                FileDownloadQueue.id -> true
+                FileDownloading.id -> true
+                FileDownloaded.id -> true
+                else -> false
+            }
+        }
+
     }
 }

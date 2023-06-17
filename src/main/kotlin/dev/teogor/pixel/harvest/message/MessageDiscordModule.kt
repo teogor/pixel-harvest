@@ -61,16 +61,21 @@ class MessageDiscordModule : DiscordModule() {
         if (Bot.isKnownBot(event.toSafeId()).first) {
             return
         }
-        var user: User
-        runBlocking {
-            user = event.getUser()
-        }
-        if (user.isBot) {
-            println(user)
+        var interactionAuthor: User
+        var messageAuthor: User
+        try {
+            runBlocking {
+                interactionAuthor = event.getUser()
+                messageAuthor = event.getMessage().author!!
+            }
+        } catch (_: Throwable) {
             return
         }
 
         val emoji = event.emoji
+        if (discriminateBots(messageAuthor, interactionAuthor, emoji)) {
+            return
+        }
 
         if (emoji is ReactionEmoji.Custom) {
             val relevantEmoji = Emoji.fromReactionEmoji(emoji)
@@ -95,6 +100,28 @@ class MessageDiscordModule : DiscordModule() {
             }
         }
     }
+}
+
+fun discriminateBots(
+    messageAuthor: User,
+    interactionAuthor: User,
+    emoji: ReactionEmoji
+): Boolean {
+    if (!interactionAuthor.isBot) {
+        return false
+    }
+    if (Bot.MidJourneyBot.isBotIdMatch(interactionAuthor.id.value.toLong())) {
+        return true
+    } else if (Bot.NijiBot.isBotIdMatch(interactionAuthor.id.value.toLong())) {
+        return true
+    } else if(Bot.PixelHarvestBot.isBotIdMatch(interactionAuthor.id.value.toLong())) {
+        if (emoji is ReactionEmoji.Custom) {
+            if(Emoji.isFileManager(emoji)) {
+                return true
+            }
+        }
+    }
+    return false
 }
 
 fun Message.deleteMessageAfterDelay(delay: Duration) {
