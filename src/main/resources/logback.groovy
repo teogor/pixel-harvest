@@ -9,4 +9,22 @@ appender("CONSOLE", ConsoleAppender) {
 
 root(TRACE) {
     appenderRef("CONSOLE")
+
+    // Exclude logs for Vectorizer AI
+    logger("org.apache.hc.client5.http.wire") {
+        level = ERROR
+        additivity = false
+    }
+
+    // Exclude logs for Database Queries
+    logger("org.jetbrains.exposed.sql") {
+        level = ERROR
+        additivity = false
+    }
+
+    // Exclude logs that don't have an error level and are made by the DEBUG [R]:[KTOR]:[ExclusionRequestRateLimiter] logger
+    logger("[R]:[KTOR]:[ExclusionRequestRateLimiter]") {
+        level = OFF
+        additivity = false
+    }
 }
