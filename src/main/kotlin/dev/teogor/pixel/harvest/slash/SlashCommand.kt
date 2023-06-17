@@ -352,43 +352,51 @@ sealed class SlashCommand {
                         isRunning = false
                     }
 
-                    message = kord.rest.interaction.modifyFollowupMessage(
-                        applicationId = interaction.applicationId,
-                        interactionToken = response.token,
-                        messageId = message.id,
-                    ) {
-                        content = ""
-                        embeds = mutableListOf(
-                            EmbedBuilder().apply {
-                                title = processingTitle
-                                description = """
-                        **$imagesToProcessLabel** `${imagesToProcess.toString().padStart(3, '0')}`
-                        
-                        **$currentStepLabel**
-                        $stepDescription
-                        
-                        $estimatedRemainingTimeText
-                        
-                        **$downloadLocationLabel:**
-                        `Downloads\${baseDownloadPath}processed\set-${nextFolder.toString().padStart(6, '0')}`
-                    """.trimIndent()
-                                color = lineColor
-                            }
-                        )
+                    try {
+                        message = kord.rest.interaction.modifyFollowupMessage(
+                            applicationId = interaction.applicationId,
+                            interactionToken = response.token,
+                            messageId = message.id,
+                        ) {
+                            content = ""
+                            embeds = mutableListOf(
+                                EmbedBuilder().apply {
+                                    title = processingTitle
+                                    description = """
+                                        **$imagesToProcessLabel** `${imagesToProcess.toString().padStart(3, '0')}`
+                                        
+                                        **$currentStepLabel**
+                                        $stepDescription
+                                        
+                                        $estimatedRemainingTimeText
+                                        
+                                        **$downloadLocationLabel:**
+                                        `Downloads\${baseDownloadPath}processed\set-${nextFolder.toString().padStart(6, '0')}`
+                                    """.trimIndent()
+                                    color = lineColor
+                                }
+                            )
+                        }
+                    } catch (_: Throwable) {
+                        println("Error updating message.")
                     }
                 }
             }
 
             progressListener.onProgress(progressData)
 
-            SvgConverter.Builder(inputFolder, outputFolder)
-                .withSvgGenerator(true)
-                .withSvgRasterizer(scalingEnabled || splitEnabled)
-                .withIncludeDataset(includeDataset)
-                .withSplitEnabled(splitEnabled)
-                .withBatchNumber(nextFolder)
-                .withProgressListener(progressListener)
-                .build()
+            try {
+                SvgConverter.Builder(inputFolder, outputFolder)
+                    .withSvgGenerator(true)
+                    .withSvgRasterizer(scalingEnabled || splitEnabled)
+                    .withIncludeDataset(includeDataset)
+                    .withSplitEnabled(splitEnabled)
+                    .withBatchNumber(nextFolder)
+                    .withProgressListener(progressListener)
+                    .build()
+            } catch (_: Throwable) {
+                isRunning = false
+            }
 
         }
     }
