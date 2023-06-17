@@ -389,8 +389,9 @@ sealed class SlashCommand {
             try {
                 runBlocking {
                     val deroBuilder = DeroBuilder(
-                        rootPath,
-                        deroListener
+                        openThreads = 6,
+                        targetFolderPath = rootPath,
+                        progressListener = deroListener
                     )
 
                     if (!deroBuilder.copyFilesToNewFolder()) {
@@ -411,6 +412,9 @@ sealed class SlashCommand {
                         if (!deroBuilder.createSplitDataset()) {
                             println("error at rasterize SVGs")
                         }
+                    }
+                    if (!deroBuilder.deleteTempContent()) {
+                        println("failed to delete temporary content")
                     }
                     deroListener.onProgress(progressData.copy(
                         processingStep = ProcessingStep.DONE

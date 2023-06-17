@@ -32,8 +32,8 @@ fun main() {
             }
         }
         val deroBuilder = DeroBuilder(
-            folderPath,
-            deroListener
+            targetFolderPath = folderPath,
+            progressListener = deroListener
         )
 
         if (!deroBuilder.copyFilesToNewFolder()) {
@@ -50,6 +50,9 @@ fun main() {
         }
         if (!deroBuilder.createSplitDataset()) {
             println("error at rasterize SVGs")
+        }
+        if (!deroBuilder.deleteTempContent()) {
+            println("failed to delete temporary content")
         }
         println("Done!")
     }
@@ -74,6 +77,7 @@ class DeroPaths {
 }
 
 class DeroBuilder(
+    private val openThreads: Int = 4,
     private val targetFolderPath: String,
     private val progressListener: Listener = Listener.EMPTY,
 ) {
@@ -94,7 +98,7 @@ class DeroBuilder(
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    private val dispatcher = newFixedThreadPoolContext(4, "DeroBuilder")
+    private val dispatcher = newFixedThreadPoolContext(openThreads, "DeroBuilder")
 
     var imagesToProcess: Int = 0
 
@@ -304,5 +308,9 @@ class DeroBuilder(
         }
 
         return@withContext true
+    }
+
+    suspend fun deleteTempContent(): Boolean = withContext(Dispatchers.IO) {
+        return@withContext jobFolder.delete()
     }
 }
