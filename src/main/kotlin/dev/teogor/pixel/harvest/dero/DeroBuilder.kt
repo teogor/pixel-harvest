@@ -1,13 +1,24 @@
 package dev.teogor.pixel.harvest.dero
 
 import dev.teogor.pixel.harvest.discord.PathUtils
+import dev.teogor.pixel.harvest.svg.generator.VectorizerAiToken
+import dev.teogor.pixel.harvest.svg.rasterizer.SvgFile
+import dev.teogor.pixel.harvest.svg.rasterizer.SvgRasterizer
+import dev.teogor.pixel.harvest.svg.rasterizer.processResult
+import dev.teogor.pixel.harvest.svg.utils.ImageExtension
+import dev.teogor.pixel.harvest.svg.utils.listFilesWithExtensions
+import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countDirectories
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder
+import org.apache.hc.client5.http.fluent.Request
+import org.apache.hc.core5.http.ClassicHttpResponse
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.max
 import kotlin.random.Random
 
 fun main() {
@@ -15,34 +26,240 @@ fun main() {
 
     println(folderPath)
     runBlocking {
-        val deroBuilder = DeroBuilder()
-        val batchFolder = deroBuilder.copyFilesToNewFolder(folderPath)
-        val imagesToProcess = batchFolder.countFiles("")
-        println("Batch Folder Ready at ${batchFolder.absolutePath}[files:$imagesToProcess]")
+        val deroBuilder = DeroBuilder(folderPath)
+
+        if (!deroBuilder.copyFilesToNewFolder()) {
+            println("error at renaming")
+        }
+        if (!deroBuilder.renameFiles()) {
+            println("error at renaming")
+        }
+        if (!deroBuilder.generateSvg()) {
+            println("error at converting SVGs")
+        }
+        if (!deroBuilder.rasterizeSvg()) {
+            println("error at rasterize SVGs")
+        }
+        if (!deroBuilder.createSplitDataset()) {
+            println("error at rasterize SVGs")
+        }
+        println("Done!")
     }
 }
 
-class DeroBuilder {
-    suspend fun copyFilesToNewFolder(folderPath: String) : File = withContext(Dispatchers.IO) {
+class DeroPaths {
+    val processedPath = "processed"
+    val svgPath = "svg"
+    val originalPath = "original"
+    val scaledPath = "scaled"
+    val splitPath = "split"
+
+    fun joinPaths(basePath: String, path: String): String {
+        return "$basePath\\$path"
+    }
+
+    fun getFolder(path: String): File {
+        val folder = File(path)
+        folder.mkdirs()
+        return folder
+    }
+}
+
+class DeroBuilder(
+    private val targetFolderPath: String,
+) {
+
+    var imagesToProcess: Int = 0
+
+    private val deroPaths = DeroPaths()
+    private val rasterizer = SvgRasterizer()
+
+    private val imageExtensions = listOf("jpg", "jpeg", "png")
+
+    // paths
+    private val jobFolderPath: String
+    private val processedFolderPath: String
+    private val setFolderPath: String
+    private val svgFolderPath: String
+    private val originalFolderPath: String
+    private val scaledFolderPath: String
+    private val splitFolderPath: String
+
+    // folders
+    private val jobFolder: File
+    private val processedFolder: File
+    private val setFolder: File
+    private val svgFolder: File
+    private val originalFolder: File
+    private val scaledFolder: File
+    private val splitFolder: File
+
+    init {
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM_dd_yyyy_HHmmss"))
         val randomNumber = Random.nextInt(1000, 10000)
         val newFolderName = "batch_job_$timestamp" + "_$randomNumber"
-        val newFolderPath = "$folderPath/$newFolderName"
-        val newFolder = File(newFolderPath)
-        newFolder.mkdirs()
+        jobFolderPath = "$targetFolderPath\\$newFolderName"
 
-        val sourceFolder = File(folderPath)
-        val files = sourceFolder.listFiles()
+        jobFolder = File(jobFolderPath)
+        jobFolder.mkdirs()
 
-        files?.forEach { file ->
-            if(file.isFile) {
-                val destinationFile = File("$newFolderPath/${file.name}")
-                // todo replace to this once debug is done
-                //  file.renameTo(destinationFile)
-                file.copyTo(destinationFile)
+        processedFolderPath = deroPaths.joinPaths(targetFolderPath, deroPaths.processedPath)
+        processedFolder = File(processedFolderPath)
+        processedFolder.mkdirs()
+
+        val batchNumber = processedFolder.countDirectories("set") + 1
+        setFolderPath = deroPaths.joinPaths(processedFolderPath, "set-${batchNumber.toString().padStart(6, '0')}")
+        setFolder = File(setFolderPath)
+        setFolder.mkdirs()
+
+        svgFolderPath = deroPaths.joinPaths(setFolderPath, deroPaths.svgPath)
+        originalFolderPath = deroPaths.joinPaths(setFolderPath, deroPaths.originalPath)
+        scaledFolderPath = deroPaths.joinPaths(setFolderPath, deroPaths.scaledPath)
+        splitFolderPath = deroPaths.joinPaths(setFolderPath, deroPaths.splitPath)
+
+        svgFolder = deroPaths.getFolder(svgFolderPath)
+        originalFolder = deroPaths.getFolder(originalFolderPath)
+        scaledFolder = deroPaths.getFolder(scaledFolderPath)
+        splitFolder = deroPaths.getFolder(splitFolderPath)
+    }
+
+    suspend fun copyFilesToNewFolder(): Boolean = withContext(Dispatchers.IO) {
+        val sourceFolder = File(targetFolderPath)
+        sourceFolder.listFilesWithExtensions(imageExtensions) { file ->
+            val destinationFile = File("$jobFolderPath/${file.name}")
+            // todo replace to this once debug is done
+            //  file.renameTo(destinationFile)
+            file.copyTo(destinationFile)
+        }
+
+        imagesToProcess = sourceFolder.countFiles("")
+
+        return@withContext true
+    }
+
+    suspend fun renameFiles(): Boolean = withContext(Dispatchers.IO) {
+        jobFolder.listFilesWithExtensions(imageExtensions) { file ->
+            val fileName = file.nameWithoutExtension
+            val regex = Regex("(.+) \\(\\d+\\)")
+            val matchResult = regex.find(fileName)
+            val extractFileName = (matchResult?.groupValues?.get(1) ?: fileName).replace(" ", "_")
+            val index = jobFolder.countFiles(extractFileName) + 1
+            val fileNamePad = "${extractFileName}_${index.toString().padStart(4, '0')}"
+            val newFile = File(jobFolder, "$fileNamePad.${file.extension}")
+            file.renameTo(newFile)
+        }
+
+        return@withContext true
+    }
+
+    suspend fun generateSvg(): Boolean = withContext(Dispatchers.IO) {
+        var currentFileIndex = 0
+        val imageExtensions = listOf("jpg", "jpeg", "png")
+
+        currentFileIndex++
+        // todo try to make multiple requests
+        // todo read the docs. it would be better if we can make around 4 requests at a time
+        jobFolder.listFilesWithExtensions(imageExtensions) { imageFile ->
+            val fileName = imageFile.nameWithoutExtension
+            val fileExtension = imageFile.extension
+            println("$fileName is *.$fileExtension")
+            val request = Request.post("https://vectorizer.ai/api/v1/vectorize")
+                .addHeader(
+                    "Authorization",
+                    "Basic $VectorizerAiToken"
+                )
+                .body(
+                    MultipartEntityBuilder.create()
+                        .addBinaryBody("image", imageFile)
+                        .build()
+                )
+            val response = request.execute().returnResponse() as ClassicHttpResponse
+
+            if (response.code == 200) {
+                val outputFileSvg = File("${svgFolderPath}/${fileName}.svg")
+                val outputFileImage = File("${originalFolderPath}/${fileName}.${imageFile.extension}")
+
+                imageFile.copyTo(outputFileImage)
+                response.entity.writeTo(outputFileSvg.outputStream())
+                response.close()
+
+                if (imageFile.exists()) {
+                    imageFile.delete()
+                }
+                currentFileIndex++
             }
         }
 
-        newFolder
+        return@withContext true
+    }
+
+    suspend fun rasterizeSvg(): Boolean = withContext(Dispatchers.IO) {
+        val saveExtension = ImageExtension.JPEG
+
+        var totalProcessingTime = 0L
+        var totalLoadTime = 0L
+        var totalScaleTime = 0L
+        var totalSaveTime = 0L
+        var processedCount = 0
+
+        var currentFileIndex = 0
+        currentFileIndex++
+        svgFolder.listFilesWithExtensions(listOf("svg")) { svgFile ->
+            val conversionResult = rasterizer.convert(
+                SvgFile(
+                    inputFile = svgFile,
+                    outputFolder = scaledFolder,
+                    scaleFactor = 6.0,
+                    extension = saveExtension,
+                )
+            )
+            conversionResult.processResult(
+                onSuccess = {
+                    with(it) {
+                        totalProcessingTime += totalTime
+                        totalLoadTime += loadTime
+                        totalScaleTime += scaleTime
+                        totalSaveTime += saveTime
+                        processedCount++
+                    }
+                },
+                onError = {
+                    System.err.println(it.errorMessage)
+                },
+            )
+            currentFileIndex++
+        }
+
+        if (processedCount == 0) {
+            return@withContext false
+        }
+
+        return@withContext true
+    }
+
+    suspend fun createSplitDataset(): Boolean = withContext(Dispatchers.IO) {
+        val svgFiles = svgFolder.listFiles() ?: emptyArray()
+        val scaledFiles = scaledFolder.listFiles() ?: emptyArray()
+
+        val maxIndex = max(svgFiles.size, scaledFiles.size)
+
+        for (index in 0 until maxIndex) {
+            val svgFile = svgFiles.getOrNull(index)
+            val scaledFile = scaledFiles.getOrNull(index)
+
+            if (index % 2 == 0) {
+                if (svgFile != null) {
+                    val outputSvgFile = File(splitFolder, svgFile.name)
+                    svgFile.copyTo(outputSvgFile, overwrite = true)
+                }
+            } else {
+                if (scaledFile != null) {
+                    val outputScaledFile = File(splitFolder, scaledFile.name)
+                    scaledFile.copyTo(outputScaledFile, overwrite = true)
+                }
+            }
+        }
+
+        return@withContext true
     }
 }
