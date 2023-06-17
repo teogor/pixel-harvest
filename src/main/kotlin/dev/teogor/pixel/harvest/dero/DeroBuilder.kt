@@ -1,6 +1,10 @@
 package dev.teogor.pixel.harvest.dero
 
 import dev.teogor.pixel.harvest.discord.PathUtils
+import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -10,14 +14,16 @@ fun main() {
     val folderPath = "${PathUtils.getDownloadsFolderPath()}\\PixelHarvest\\ZeoAI-Automation\\images"
 
     println(folderPath)
-    DeroBuilder().apply {
-        val batchFolder = copyFilesToNewFolder(folderPath)
-        println("Batch Folder Ready at ${batchFolder.absolutePath}")
+    runBlocking {
+        val deroBuilder = DeroBuilder()
+        val batchFolder = deroBuilder.copyFilesToNewFolder(folderPath)
+        val imagesToProcess = batchFolder.countFiles("")
+        println("Batch Folder Ready at ${batchFolder.absolutePath}[files:$imagesToProcess]")
     }
 }
 
 class DeroBuilder {
-    fun copyFilesToNewFolder(folderPath: String) : File {
+    suspend fun copyFilesToNewFolder(folderPath: String) : File = withContext(Dispatchers.IO) {
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM_dd_yyyy_HHmmss"))
         val randomNumber = Random.nextInt(1000, 10000)
         val newFolderName = "batch_job_$timestamp" + "_$randomNumber"
@@ -31,10 +37,12 @@ class DeroBuilder {
         files?.forEach { file ->
             if(file.isFile) {
                 val destinationFile = File("$newFolderPath/${file.name}")
-                file.renameTo(destinationFile)
+                // todo replace to this once debug is done
+                //  file.renameTo(destinationFile)
+                file.copyTo(destinationFile)
             }
         }
 
-        return newFolder
+        newFolder
     }
 }
