@@ -406,20 +406,6 @@ class SvgConverter private constructor(
         currentIndex: Int,
     ) {
         runBlocking {
-            // todo error
-            // dev.kord.rest.request.KtorRequestException: REST request returned an error: 401 Unauthorized  Invalid Webhook Token null
-            // at dev.kord.rest.request.KtorRequestHandler.handle(KtorRequestHandler.kt:61)
-            // at dev.kord.rest.request.KtorRequestHandler$handle$1.invokeSuspend(KtorRequestHandler.kt)
-            // at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
-            // at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:106)
-            // at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:284)
-            // at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
-            // at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
-            // at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
-            // at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
-            // at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
-            // at dev.teogor.pixel.harvest.svg.SvgConverter.dispatchProgress(SvgConverter.kt:354)
-            // at dev.teogor.pixel.harvest.svg.SvgConverter.access$dispatchProgress(SvgConverter.kt:36)
             try {
                 progressListener.onProgress(
                     progressData.copy(
