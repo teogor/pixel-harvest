@@ -389,7 +389,7 @@ sealed class SlashCommand {
             try {
                 runBlocking {
                     val deroBuilder = DeroBuilder(
-                        openThreads = 6,
+                        openThreads = 4,
                         targetFolderPath = rootPath,
                         progressListener = deroListener
                     )
