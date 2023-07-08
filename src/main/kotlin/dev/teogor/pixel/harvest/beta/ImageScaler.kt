@@ -16,7 +16,85 @@ enum class Resolution(val width: Int, val height: Int) {
     R8K(7680, 4320)
 }
 
-object ImageScaler {
+class ImageScaler private constructor(
+    resolution: Resolution,
+    directoryPath: String,
+    deleteOldFile: Boolean = false,
+) {
+    data class ImageDimension(val width: Int, val height: Int) {
+        val aspectRatio = width.toDouble() / height.toDouble()
+    }
+
+    private fun Double.format(digits: Int): String = "%.${digits}f".format(this)
+
+    companion object {
+        fun forDirectory(
+            resolution: Resolution,
+            directoryPath: String,
+            deleteOldFile: Boolean = false,
+        ): ImageScaler {
+            return ImageScaler(
+                resolution = resolution,
+                directoryPath = directoryPath,
+                deleteOldFile = deleteOldFile,
+            ).apply {
+                val imageExtensions = listOf("jpg", "jpeg", "png")
+                val directory = File(directoryPath)
+                directory.listFilesWithExtensions(imageExtensions) { imageFile ->
+                    println("Image File -> Name: ${imageFile.nameWithoutExtension}")
+
+                    val originalImage = ImageIO.read(imageFile)
+                    val originalResolution = ImageDimension(originalImage.width, originalImage.height)
+                    println(
+                        "Previous Resolution: ${originalResolution.width}x${originalResolution.height} (${
+                            originalResolution.aspectRatio.format(
+                                3
+                            )
+                        })"
+                    )
+
+                    val scaledImage = scaleImage(originalImage, resolution)
+                    val newResolution = ImageDimension(scaledImage.width, scaledImage.height)
+                    println("New Resolution: ${newResolution.width}x${newResolution.height} (${newResolution.aspectRatio.format(3)})")
+
+                    val outputFileName = "${imageFile.nameWithoutExtension}-scaled.jpg"
+                    val outputFilePath = "${imageFile.parentFile}\\$outputFileName"
+                    val outputFile = File(outputFilePath)
+
+                    val writer: ImageWriter = ImageIO.getImageWritersByFormatName("jpg").next()
+                    val param: ImageWriteParam = writer.defaultWriteParam
+                    param.compressionMode = ImageWriteParam.MODE_EXPLICIT
+                    param.compressionQuality = 1.0f // Set quality to 100%
+
+                    val outputStream: ImageOutputStream = ImageIO.createImageOutputStream(outputFile)
+                    writer.output = outputStream
+                    writer.write(null, IIOImage(scaledImage, null, null), param)
+
+                    outputStream.close()
+                    writer.dispose()
+
+                    if (outputFile.exists() && deleteOldFile) {
+                        imageFile.delete()
+                    }
+                }
+            }
+        }
+
+        fun forImage(
+            resolution: Resolution,
+            directoryPath: String,
+            deleteOldFile: Boolean = false,
+        ): ImageScaler {
+            return ImageScaler(
+                resolution = resolution,
+                directoryPath = directoryPath,
+                deleteOldFile = deleteOldFile,
+            ).apply {
+
+            }
+        }
+    }
+
     fun scaleImage(image: BufferedImage, resolution: Resolution): BufferedImage {
         val aspectRatio = image.width.toDouble() / image.height.toDouble()
         val scaledWidth: Int
@@ -40,10 +118,6 @@ object ImageScaler {
     }
 }
 
-data class ImageDimension(val width: Int, val height: Int) {
-    val aspectRatio = width.toDouble() / height.toDouble()
-}
-
 fun main() {
     // sof::customizable
     val resolution = Resolution.R8K
@@ -51,39 +125,9 @@ fun main() {
     val deleteOldFile = true
     // eof::customizable
 
-    val imageExtensions = listOf("jpg", "jpeg", "png")
-    val directory = File(directoryPath)
-    directory.listFilesWithExtensions(imageExtensions) { imageFile ->
-        println("Image File -> Name: ${imageFile.nameWithoutExtension}")
-
-        val originalImage = ImageIO.read(imageFile)
-        val originalResolution = ImageDimension(originalImage.width, originalImage.height)
-        println("Previous Resolution: ${originalResolution.width}x${originalResolution.height} (${originalResolution.aspectRatio.format(3)})")
-
-        val scaledImage = ImageScaler.scaleImage(originalImage, resolution)
-        val newResolution = ImageDimension(scaledImage.width, scaledImage.height)
-        println("New Resolution: ${newResolution.width}x${newResolution.height} (${newResolution.aspectRatio.format(3)})")
-
-        val outputFileName = "${imageFile.nameWithoutExtension}-scaled.jpg"
-        val outputFilePath = "${imageFile.parentFile}\\$outputFileName"
-        val outputFile = File(outputFilePath)
-
-        val writer: ImageWriter = ImageIO.getImageWritersByFormatName("jpg").next()
-        val param: ImageWriteParam = writer.defaultWriteParam
-        param.compressionMode = ImageWriteParam.MODE_EXPLICIT
-        param.compressionQuality = 1.0f // Set quality to 100%
-
-        val outputStream: ImageOutputStream = ImageIO.createImageOutputStream(outputFile)
-        writer.output = outputStream
-        writer.write(null, IIOImage(scaledImage, null, null), param)
-
-        outputStream.close()
-        writer.dispose()
-
-        if (outputFile.exists() && deleteOldFile) {
-            imageFile.delete()
-        }
-    }
+    ImageScaler.forDirectory(
+        resolution = resolution,
+        directoryPath = directoryPath,
+        deleteOldFile = deleteOldFile,
+    )
 }
-
-fun Double.format(digits: Int): String = "%.${digits}f".format(this)
