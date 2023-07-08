@@ -6,10 +6,11 @@ import java.io.File
 
 fun main() {
     val baseDownloadPath = "PixelHarvest\\ZeoAI-Automation\\images"
-    val folderPath = "${PathUtils.getDownloadsFolderPath()}\\$baseDownloadPath"
+    // val folderPath = "${PathUtils.getDownloadsFolderPath()}\\$baseDownloadPath"
+    val folderPath = "E:\\Adobe Stock\\Iconiq Hub\\Images\\set-000001\\split"
 
-    val searchPattern = "Create a patterned image featuring "
-    val replacement = ""
+    val searchPattern = "l00"
+    val replacement = "l_00"
 
     val folder = File(folderPath)
 
