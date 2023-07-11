@@ -17,9 +17,9 @@ enum class Resolution(val width: Int, val height: Int) {
 }
 
 class ImageScaler private constructor(
-    resolution: Resolution,
-    directoryPath: String,
-    deleteOldFile: Boolean = false,
+    val resolution: Resolution,
+    val directory: File,
+    val deleteOldFile: Boolean = false,
 ) {
     data class ImageDimension(val width: Int, val height: Int) {
         val aspectRatio = width.toDouble() / height.toDouble()
@@ -30,67 +30,72 @@ class ImageScaler private constructor(
     companion object {
         fun forDirectory(
             resolution: Resolution,
-            directoryPath: String,
+            directory: File,
             deleteOldFile: Boolean = false,
         ): ImageScaler {
             return ImageScaler(
                 resolution = resolution,
-                directoryPath = directoryPath,
+                directory = directory,
                 deleteOldFile = deleteOldFile,
             ).apply {
-                val imageExtensions = listOf("jpg", "jpeg", "png")
-                val directory = File(directoryPath)
-                directory.listFilesWithExtensions(imageExtensions) { imageFile ->
-                    println("Image File -> Name: ${imageFile.nameWithoutExtension}")
-
-                    val originalImage = ImageIO.read(imageFile)
-                    val originalResolution = ImageDimension(originalImage.width, originalImage.height)
-                    println(
-                        "Previous Resolution: ${originalResolution.width}x${originalResolution.height} (${
-                            originalResolution.aspectRatio.format(
-                                3
-                            )
-                        })"
-                    )
-
-                    val scaledImage = scaleImage(originalImage, resolution)
-                    val newResolution = ImageDimension(scaledImage.width, scaledImage.height)
-                    println("New Resolution: ${newResolution.width}x${newResolution.height} (${newResolution.aspectRatio.format(3)})")
-
-                    val outputFileName = "${imageFile.nameWithoutExtension}-scaled.jpg"
-                    val outputFilePath = "${imageFile.parentFile}\\$outputFileName"
-                    val outputFile = File(outputFilePath)
-
-                    val writer: ImageWriter = ImageIO.getImageWritersByFormatName("jpg").next()
-                    val param: ImageWriteParam = writer.defaultWriteParam
-                    param.compressionMode = ImageWriteParam.MODE_EXPLICIT
-                    param.compressionQuality = 1.0f // Set quality to 100%
-
-                    val outputStream: ImageOutputStream = ImageIO.createImageOutputStream(outputFile)
-                    writer.output = outputStream
-                    writer.write(null, IIOImage(scaledImage, null, null), param)
-
-                    outputStream.close()
-                    writer.dispose()
-
-                    if (outputFile.exists() && deleteOldFile) {
-                        imageFile.delete()
-                    }
-                }
+                scaleWithinDirectory()
             }
         }
 
         fun forImage(
             resolution: Resolution,
-            directoryPath: String,
+            directory: File,
             deleteOldFile: Boolean = false,
         ): ImageScaler {
             return ImageScaler(
                 resolution = resolution,
-                directoryPath = directoryPath,
+                directory = directory,
                 deleteOldFile = deleteOldFile,
             ).apply {
 
+            }
+        }
+    }
+
+    fun scaleWithinDirectory() {
+        val imageExtensions = listOf("jpg", "jpeg", "png")
+        directory.listFilesWithExtensions(imageExtensions) { imageFile ->
+            println("Image File -> Name: ${imageFile.nameWithoutExtension}")
+
+            val originalImage = ImageIO.read(imageFile)
+            val originalResolution = ImageDimension(originalImage.width, originalImage.height)
+
+            val scaledImage = scaleImage(originalImage, resolution)
+            val newResolution = ImageDimension(scaledImage.width, scaledImage.height)
+
+            val originalFileName = imageFile.nameWithoutExtension
+            val originalFileExtension = imageFile.extension
+            val scaledFileName = if (originalFileName.matches(".*\\(\\d+\\)$".toRegex())) {
+                val pattern = "(\\(\\d+\\))$".toRegex().find(originalFileName)?.value
+                    .orEmpty()
+                val newFileName = originalFileName.replace(pattern, "").trim()
+                "$newFileName-scaled $pattern"
+            } else {
+                "$originalFileName-scaled"
+            }
+            val outputFileName = "$scaledFileName.$originalFileExtension"
+            val outputFilePath = "${imageFile.parentFile}\\$outputFileName"
+            val outputFile = File(outputFilePath)
+
+            val writer: ImageWriter = ImageIO.getImageWritersByFormatName("jpg").next()
+            val param: ImageWriteParam = writer.defaultWriteParam
+            param.compressionMode = ImageWriteParam.MODE_EXPLICIT
+            param.compressionQuality = 1.0f // Set quality to 100%
+
+            val outputStream: ImageOutputStream = ImageIO.createImageOutputStream(outputFile)
+            writer.output = outputStream
+            writer.write(null, IIOImage(scaledImage, null, null), param)
+
+            outputStream.close()
+            writer.dispose()
+
+            if (outputFile.exists() && deleteOldFile) {
+                imageFile.delete()
             }
         }
     }
@@ -100,7 +105,7 @@ class ImageScaler private constructor(
         val scaledWidth: Int
         val scaledHeight: Int
 
-        if (aspectRatio > 1) {
+        if (aspectRatio >= 1) {
             scaledWidth = resolution.width
             scaledHeight = (resolution.width / aspectRatio).toInt()
         } else {
@@ -127,7 +132,7 @@ fun main() {
 
     ImageScaler.forDirectory(
         resolution = resolution,
-        directoryPath = directoryPath,
+        directory = File(directoryPath),
         deleteOldFile = deleteOldFile,
     )
 }

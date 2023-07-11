@@ -104,12 +104,8 @@ object ImageDownloader {
                     val imageUrl = attachment.url
                     val extension = File(attachment.filename).extension
                     val extractFileName = content.extractPromptName
-                    val index = rootDirectory.countFiles(extractFileName)
-                    val fileName = if (index == 0) {
-                        extractFileName
-                    } else {
-                        "$extractFileName (${index.toString().padStart(4, '0')})"
-                    }
+                    val index = rootDirectory.countFiles(extractFileName) + 1
+                    val fileName = "$extractFileName (${index.toString().padStart(4, '0')})"
                     val filePath = "${basePath}${fileName}.$extension"
                     addDownload(
                         discordId = invokerId,
