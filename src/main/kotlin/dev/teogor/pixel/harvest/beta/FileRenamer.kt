@@ -50,7 +50,7 @@ class FileRenamer private constructor(
 fun main() {
     // sof::customizable
     val directoryPath = "${PathUtils.getDownloadsFolderPath()}\\PixelHarvest\\ZeoAI-Automation\\images\\photo-ai"
-    val searchPattern = "Generate "
+    val searchPattern = ""
     val replacement = ""
     // eof::customizable
 

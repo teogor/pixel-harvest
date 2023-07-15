@@ -100,7 +100,7 @@ class ImageScaler private constructor(
         }
     }
 
-    fun scaleImage(image: BufferedImage, resolution: Resolution): BufferedImage {
+    private fun scaleImage(image: BufferedImage, resolution: Resolution): BufferedImage {
         val aspectRatio = image.width.toDouble() / image.height.toDouble()
         val scaledWidth: Int
         val scaledHeight: Int
@@ -109,8 +109,8 @@ class ImageScaler private constructor(
             scaledWidth = resolution.width
             scaledHeight = (resolution.width / aspectRatio).toInt()
         } else {
-            scaledWidth = (resolution.height * aspectRatio).toInt()
-            scaledHeight = resolution.height
+            scaledWidth = (resolution.width * aspectRatio).toInt()
+            scaledHeight = resolution.width
         }
 
         val scaledImage = image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH)

@@ -78,6 +78,7 @@ class DeroPaths {
 
 class DeroBuilder(
     private val openThreads: Int = 4,
+    private val batchNumber: Int = 0,
     private val targetFolderPath: String,
     private val progressListener: Listener = Listener.EMPTY,
 ) {
@@ -138,7 +139,11 @@ class DeroBuilder(
         processedFolder = File(processedFolderPath)
         processedFolder.mkdirs()
 
-        val batchNumber = processedFolder.countDirectories("set") + 1
+        val batchNumber = if (batchNumber > 0) {
+            batchNumber
+        } else {
+            processedFolder.countDirectories("set") + 1
+        }
         setFolderPath = deroPaths.joinPaths(processedFolderPath, "set-${batchNumber.toString().padStart(6, '0')}")
         setFolder = File(setFolderPath)
         setFolder.mkdirs()
@@ -223,9 +228,11 @@ class DeroBuilder(
                     }
                 }
                 currentFileIndex++
-                progressListener.onProgress(progressData.copy(
-                    currentIndex = currentFileIndex
-                ))
+                progressListener.onProgress(
+                    progressData.copy(
+                        currentIndex = currentFileIndex
+                    )
+                )
             }
         }
 
@@ -275,9 +282,11 @@ class DeroBuilder(
                     },
                 )
                 currentFileIndex++
-                progressListener.onProgress(progressData.copy(
-                    currentIndex = currentFileIndex
-                ))
+                progressListener.onProgress(
+                    progressData.copy(
+                        currentIndex = currentFileIndex
+                    )
+                )
             }
         }
 
