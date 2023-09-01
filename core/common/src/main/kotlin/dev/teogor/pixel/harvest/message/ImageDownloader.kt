@@ -12,13 +12,8 @@ import dev.teogor.pixel.harvest.database.DatabaseManager.addDownload
 import dev.teogor.pixel.harvest.discord.PathUtils.getDownloadsFolderPath
 import dev.teogor.pixel.harvest.models.Bot
 import dev.teogor.pixel.harvest.test.ContentTrimmerTest.countFiles
-import dev.teogor.pixel.harvest.utils.Emoji
+import dev.teogor.pixel.harvest.utils.*
 import dev.teogor.pixel.harvest.utils.ParamsData.Companion.formatParamsData
-import dev.teogor.pixel.harvest.utils.createDirectoryIfNotExists
-import dev.teogor.pixel.harvest.utils.extractPromptName
-import dev.teogor.pixel.harvest.utils.extractText
-import dev.teogor.pixel.harvest.utils.getParams
-import dev.teogor.pixel.harvest.utils.getRandomColor
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import java.io.BufferedInputStream
@@ -28,6 +23,7 @@ import java.net.URL
 
 object ImageDownloader {
     private val downloadQueue: MutableList<Message> = mutableListOf()
+    private val promptsMessage: MutableList<String> = mutableListOf()
     private var isDownloading: Boolean = false
     private var queueSizeCallback: ((Int) -> Unit)? = null
 
@@ -171,22 +167,25 @@ object ImageDownloader {
                                 "Imagine Command Unveils a Brand-New Prompt",
                                 "Imagine Command Creates a Spark",
                             )
-                            BotManager.kord.rest.channel.createMessage(
-                                channelId = MessageDiscordModule.ImagineChannel.id,
-                            ) {
-                                this.embed {
-                                    title = titleVariants.random()
-                                    description = """
+                            // **Params:** ```${extractPromptArgs}```
+                            if (!promptsMessage.contains(extractPromptName)) {
+                                BotManager.kord.rest.channel.createMessage(
+                                    channelId = MessageDiscordModule.ImagineChannel.id,
+                                ) {
+                                    this.embed {
+                                        title = titleVariants.random()
+                                        description = """
                                                 ${messageLinkVariants.random()}
                                                 
-                                                **Prompt:** `${extractPromptName}`
-                                                **Params:** `${extractPromptArgs}`
+                                                **Prompt:** ```${extractPromptName}```
                                                 
                                                 **Author** ${user.mention} | **AI Generator** ${message.author?.mention ?: "Unknown"}
                                             """.trimIndent()
-                                    color = getRandomColor()
-                                    timestamp = Clock.System.now()
+                                        color = getRandomColor()
+                                        timestamp = Clock.System.now()
+                                    }
                                 }
+                                promptsMessage.add(extractPromptName)
                             }
                         }
                     }

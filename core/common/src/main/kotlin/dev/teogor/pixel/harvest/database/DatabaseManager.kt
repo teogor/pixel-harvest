@@ -1,7 +1,7 @@
 package dev.teogor.pixel.harvest.database
 
 object DatabaseManager {
-    private val databaseHandler: DatabaseHandler = DatabaseHandler("src/main/resources/pixel-harvest.db").apply {
+    private val databaseHandler: DatabaseHandler = DatabaseHandler("core/common/src/main/resources/pixel-harvest.db").apply {
         initializeDatabase()
     }
 
